@@ -1,0 +1,20 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Maven
+target/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Local config and secrets
+.env
+*.local
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: atlas
+
+  datasource:
+    url: ${ATLAS_DB_URL:jdbc:postgresql://localhost:5432/atlas}
+    username: ${ATLAS_DB_USER:atlas}
+    password: ${ATLAS_DB_PASSWORD:atlas}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # Liquibase owns the schema; Hibernate only checks it
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+server:
+  port: 8080
