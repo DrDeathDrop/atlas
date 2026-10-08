@@ -33,8 +33,9 @@ public class SecurityConfig {
 
     /**
      * Stateless API: no server-side session, no login form, no basic auth.
-     * Logging in is the only open endpoint. Every other request must carry
-     * a valid access token in the Authorization header.
+     * Login, refresh and logout are open, because they are used exactly
+     * when the caller has no valid access token. Every other request must
+     * carry one in the Authorization header.
      */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -45,7 +46,8 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login", "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
