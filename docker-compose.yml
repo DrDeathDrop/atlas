@@ -1,4 +1,10 @@
-# Local development services. Start with: docker compose up -d
+# Development:  docker compose up -d
+#   Starts only the database. Run the backend from the IDE and the
+#   frontend with "npm start".
+#
+# Full stack:   docker compose --profile full up -d --build
+#   Also builds and starts the backend and frontend in containers.
+#   The app is then at http://localhost:4200.
 services:
   postgres:
     image: postgis/postgis:17-3.5
@@ -8,7 +14,7 @@ services:
       POSTGRES_USER: atlas
       POSTGRES_PASSWORD: atlas   # local development only
     ports:
-      - "5432:5432"
+      - "5433:5432"   # host port 5433, so it does not clash with a local PostgreSQL on 5432
     volumes:
       - atlas-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +22,29 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  backend:
+    profiles: ["full"]
+    build: ./backend
+    container_name: atlas-backend
+    environment:
+      ATLAS_DB_URL: jdbc:postgresql://postgres:5432/atlas
+      ATLAS_DB_USER: atlas
+      ATLAS_DB_PASSWORD: atlas
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    profiles: ["full"]
+    build: ./frontend
+    container_name: atlas-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
 
 volumes:
   atlas-postgres-data:

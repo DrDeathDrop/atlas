@@ -3,7 +3,7 @@ spring:
     name: atlas
 
   datasource:
-    url: ${ATLAS_DB_URL:jdbc:postgresql://localhost:5432/atlas}
+    url: ${ATLAS_DB_URL:jdbc:postgresql://localhost:5433/atlas}
     username: ${ATLAS_DB_USER:atlas}
     password: ${ATLAS_DB_PASSWORD:atlas}
 
