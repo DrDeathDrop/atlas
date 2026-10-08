@@ -17,3 +17,17 @@ spring:
 
 server:
   port: 8080
+
+atlas:
+  security:
+    jwt:
+      # Signing key for access tokens, at least 32 characters.
+      # Left empty, a random key is generated at startup (development only).
+      secret: ${ATLAS_JWT_SECRET:}
+      access-token-ttl: 15m
+  bootstrap:
+    admin:
+      # The first administrator, created only when no admin exists yet.
+      # Left empty, a random password is generated and logged once.
+      email: ${ATLAS_ADMIN_EMAIL:admin@atlas.local}
+      password: ${ATLAS_ADMIN_PASSWORD:}
