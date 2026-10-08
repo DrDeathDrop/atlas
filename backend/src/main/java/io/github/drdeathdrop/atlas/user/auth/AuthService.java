@@ -17,13 +17,11 @@ import java.util.UUID;
 
 @Service
 public class AuthService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final RefreshTokenService refreshTokenService;
 
-    /** A hash of nothing in particular, compared against when the email is unknown. */
     private final String dummyPasswordHash;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
@@ -40,8 +38,6 @@ public class AuthService {
         Optional<User> found = userRepository.findByEmail(email.toLowerCase());
 
         if (found.isEmpty()) {
-            // Do the same amount of hashing work as for a real user, so the
-            // response time does not reveal whether the email exists.
             passwordEncoder.matches(rawPassword, dummyPasswordHash);
             throw new InvalidCredentialsException();
         }
@@ -59,17 +55,11 @@ public class AuthService {
         return new LoginResult(accessTokenFor(user), refreshToken);
     }
 
-    /**
-     * Exchanges a refresh token for a new access token and a new refresh
-     * token. Deliberately not transactional: the rotation commits on its
-     * own, so a revocation it performs is never undone by a later failure.
-     */
     public LoginResult refresh(String presentedRefreshToken, String userAgent, String ipAddress) {
         IssuedRefreshToken rotated = refreshTokenService.rotate(presentedRefreshToken, userAgent, ipAddress);
 
         Optional<User> user = userRepository.findById(rotated.userId()).filter(User::isEnabled);
         if (user.isEmpty()) {
-            // The account was disabled or removed after the session started.
             refreshTokenService.revokeAllForUser(rotated.userId());
             throw new InvalidRefreshTokenException();
         }

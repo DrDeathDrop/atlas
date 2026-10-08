@@ -13,14 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Lets a user see where they are logged in and end any of those sessions.
- * The user is always taken from the verified access token.
- */
 @RestController
 @RequestMapping("/api/auth/sessions")
 public class SessionController {
-
     private final RefreshTokenService refreshTokenService;
 
     public SessionController(RefreshTokenService refreshTokenService) {

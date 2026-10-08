@@ -20,23 +20,11 @@ import java.util.List;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
-
-    /**
-     * Hashes passwords with BCrypt. The stored value is prefixed with the
-     * algorithm name, so the algorithm can be changed later without
-     * invalidating existing passwords.
-     */
     @Bean
     PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    /**
-     * Stateless API: no server-side session, no login form, no basic auth.
-     * Login, refresh and logout are open, because they are used exactly
-     * when the caller has no valid access token. Every other request must
-     * carry one in the Authorization header.
-     */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
@@ -54,11 +42,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Turns a verified token into the authenticated user: the name is the
-     * user's id (the token subject) and the role claim becomes an authority
-     * such as ROLE_DISPATCHER, which role checks on methods rely on.
-     */
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();

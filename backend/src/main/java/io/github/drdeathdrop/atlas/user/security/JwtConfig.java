@@ -16,16 +16,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
-/**
- * Creates the key that signs access tokens, and the two objects that use it:
- * an encoder that produces tokens and a decoder that verifies them.
- */
 @Configuration
 public class JwtConfig {
-
     private static final Logger log = LoggerFactory.getLogger(JwtConfig.class);
 
-    /** HS256 needs a key of at least 256 bits. */
     private static final int MIN_KEY_BYTES = 32;
 
     @Bean

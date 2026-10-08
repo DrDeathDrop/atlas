@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RefreshTokenServiceTest {
-
     private static final String AGENT = "JUnit";
     private static final String IP = "127.0.0.1";
 
@@ -37,8 +36,6 @@ class RefreshTokenServiceTest {
     void setUp() {
         service = new RefreshTokenService(repository, new RefreshTokenProperties(Duration.ofDays(7)));
     }
-
-    // ---- issue
 
     @Test
     void issueStoresOnlyTheHashOfTheToken() {
@@ -61,8 +58,6 @@ class RefreshTokenServiceTest {
         assertThat(service.issue(userId, AGENT, IP).value())
                 .isNotEqualTo(service.issue(userId, AGENT, IP).value());
     }
-
-    // ---- rotate: these describe what the method has to do
 
     @Test
     void rotateRevokesThePresentedTokenAndIssuesANewOne() {
@@ -117,8 +112,6 @@ class RefreshTokenServiceTest {
         verify(repository).revokeAllForUser(eq(userId), any(Instant.class));
         verify(repository, never()).save(any());
     }
-
-    // ---- sessions
 
     @Test
     void revokeSessionRefusesASessionOfAnotherUser() {

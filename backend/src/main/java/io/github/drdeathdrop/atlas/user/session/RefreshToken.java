@@ -11,15 +11,10 @@ import lombok.Getter;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * One logged-in device. The token itself is never stored, only its hash,
- * so a copy of the database cannot be used to impersonate anyone.
- */
 @Getter
 @Entity
 @Table(name = "refresh_tokens")
 public class RefreshToken {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -44,7 +39,6 @@ public class RefreshToken {
     @Column(updatable = false, length = 45)
     private String ipAddress;
 
-    /** Required by JPA. */
     protected RefreshToken() {
     }
 

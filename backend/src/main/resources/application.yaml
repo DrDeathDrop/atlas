@@ -10,29 +10,23 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate   # Liquibase owns the schema; Hibernate only checks it
+      ddl-auto: validate
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 server:
   port: 8080
-  # Behind a TLS-terminating proxy, trust its X-Forwarded-* headers (from
-  # internal addresses only) so the app knows the original scheme and client IP.
   forward-headers-strategy: native
 
 atlas:
   security:
     jwt:
-      # Signing key for access tokens, at least 32 characters.
-      # Left empty, a random key is generated at startup (development only).
       secret: ${ATLAS_JWT_SECRET:}
       access-token-ttl: 15m
     refresh-token:
       ttl: 7d
   bootstrap:
     admin:
-      # The first administrator, created only when no admin exists yet.
-      # Left empty, a random password is generated and logged once.
       email: ${ATLAS_ADMIN_EMAIL:admin@atlas.local}
       password: ${ATLAS_ADMIN_PASSWORD:}

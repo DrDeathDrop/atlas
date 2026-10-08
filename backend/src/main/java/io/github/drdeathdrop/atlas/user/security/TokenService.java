@@ -12,16 +12,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Issues signed access tokens.
- *
- * A token carries the user's id as its subject, plus the email and role.
- * The server keeps no record of it: a request is trusted because the
- * signature is valid and the token has not expired.
- */
 @Service
 public class TokenService {
-
     public static final String ROLE_CLAIM = "role";
     public static final String EMAIL_CLAIM = "email";
 

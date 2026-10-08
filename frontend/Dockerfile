@@ -1,4 +1,3 @@
-# Build stage: compile the Angular application
 FROM node:24-alpine AS build
 WORKDIR /app
 
@@ -8,7 +7,6 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-# Runtime stage: nginx serves the static files and forwards /api to the backend
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/atlas-frontend/browser /usr/share/nginx/html

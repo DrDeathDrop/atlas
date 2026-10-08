@@ -28,7 +28,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
-
     private static final String AGENT = "JUnit";
     private static final String IP = "127.0.0.1";
 

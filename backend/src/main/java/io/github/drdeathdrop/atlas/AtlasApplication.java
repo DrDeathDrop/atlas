@@ -7,7 +7,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class AtlasApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(AtlasApplication.class, args);
     }

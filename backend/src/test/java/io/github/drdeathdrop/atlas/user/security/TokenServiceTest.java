@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TokenServiceTest {
-
     private final SecretKey key = key("0123456789abcdef0123456789abcdef");
     private final TokenService tokenService = new TokenService(
             new NimbusJwtEncoder(new ImmutableSecret<>(key)),

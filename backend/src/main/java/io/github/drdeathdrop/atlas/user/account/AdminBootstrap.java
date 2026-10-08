@@ -10,10 +10,8 @@ import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-
 @Component
 public class AdminBootstrap implements ApplicationRunner {
-
     private static final Logger log = LoggerFactory.getLogger(AdminBootstrap.class);
 
     private final UserRepository userRepository;

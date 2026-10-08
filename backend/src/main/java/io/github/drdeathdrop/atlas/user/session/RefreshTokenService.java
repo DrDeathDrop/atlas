@@ -16,7 +16,6 @@ import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
-
     private static final int TOKEN_BYTES = 32;
     private static final int MAX_USER_AGENT_LENGTH = 255;
     private static final Duration DEFAULT_TTL = Duration.ofDays(7);
@@ -95,7 +94,6 @@ public class RefreshTokenService {
         token.revoke(Instant.now());
     }
 
-    /** SHA-256 of the token, as 64 hexadecimal characters. */
     static String hash(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
