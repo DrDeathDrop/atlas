@@ -94,6 +94,37 @@ connects as a user that may `INSERT` and `SELECT` on it but not `UPDATE` or
 `DELETE`. This needs two database users, an owner that runs migrations and a
 restricted one used at runtime.
 
+## Authentication
+
+Accounts are created by administrators; there is no public sign-up. Each user
+has exactly one role: `ADMIN`, `DISPATCHER`, `FIELD_OPERATOR`, `ANALYST` or
+`VIEWER`. The first administrator is created at startup when none exists.
+
+Logging in with email and password returns two tokens:
+
+- An **access token**: a JWT signed with HS256, valid for 15 minutes, carrying
+  the user's id and role. It is sent in the `Authorization` header and verified
+  on every request by Spring Security's resource server support. The server
+  keeps no session.
+- A **refresh token**: a random value, valid for 7 days, delivered in an
+  `HttpOnly`, `SameSite=Strict` cookie scoped to `/api/auth`. Only its SHA-256
+  hash is stored. Each row is one logged-in device, which is what session
+  listing and revocation are built on.
+
+Refresh tokens rotate: using one replaces it. Presenting a token that was
+already used is treated as theft and ends every session of that user.
+
+The current user is always taken from the verified token, never from a URL or
+request body. Role rules are declared on methods with `@PreAuthorize`.
+
+Passwords are hashed with BCrypt. The signing key comes from
+`ATLAS_JWT_SECRET`; when it is unset a random key is generated at startup,
+which is acceptable only for local development.
+
+Known limitation: disabling a user does not invalidate an access token that
+was already issued. It stops working when it expires, at most 15 minutes
+later, and cannot be refreshed.
+
 ## Technology
 
 | Area | Choice |
@@ -108,8 +139,8 @@ restricted one used at runtime.
 
 ## Current state
 
-Implemented: backend skeleton, database container, Liquibase with the PostGIS
-migration.
+Implemented: the `user` module (accounts, roles, login, refresh tokens,
+sessions), Liquibase migrations, Docker setup, CI.
 
-Not yet implemented: every module above, the two database users, the
-frontend, CI.
+Not yet implemented: every other module, the two database users, the
+frontend beyond its skeleton.

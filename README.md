@@ -58,6 +58,19 @@ docker compose --profile full up -d --build
 This builds and starts the backend and frontend as well. The app is then at
 http://localhost:4200.
 
+## Configuration
+
+All settings have defaults that work locally. Outside local development, set:
+
+| Variable | Purpose |
+|---|---|
+| `ATLAS_JWT_SECRET` | Signing key for access tokens, at least 32 characters |
+| `ATLAS_ADMIN_EMAIL`, `ATLAS_ADMIN_PASSWORD` | The first administrator, created when none exists |
+| `ATLAS_DB_URL`, `ATLAS_DB_USER`, `ATLAS_DB_PASSWORD` | Database connection |
+
+If `ATLAS_ADMIN_PASSWORD` is not set, a random password is generated and
+written to the log once, on the first start.
+
 ## Tests
 
 - Backend, from `backend/`: `./mvnw verify`. The database must be running.
@@ -81,7 +94,9 @@ Done:
 - Backend and frontend skeletons
 - Database with PostGIS and Liquibase migrations
 - Docker setup and CI pipeline
+- Authentication: role-based access, JWT access tokens, rotating refresh
+  tokens in an HttpOnly cookie, session management
 
-Planned, in order: authentication and roles, incident lifecycle, resource
+Planned, in order: incident lifecycle, resource
 management, operations dashboard, map, real-time updates, event system,
 priority scoring, disaster simulator, analytics, observability.
