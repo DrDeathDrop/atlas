@@ -1,0 +1,33 @@
+<header class="header">
+  <h1>Map</h1>
+  <div class="controls">
+    <mat-checkbox [checked]="showIncidents()" (change)="showIncidents.set($event.checked)">
+      Open incidents ({{ openIncidents().length }})
+    </mat-checkbox>
+    <mat-checkbox [checked]="showResources()" (change)="showResources.set($event.checked)">
+      Resources ({{ resources().length }})
+    </mat-checkbox>
+    <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()">Refresh</button>
+  </div>
+</header>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (failed()) {
+  <p class="message error" role="alert">The map data could not be loaded. Check that the server is running and try again.</p>
+}
+
+<app-map-view class="map" [markers]="markers()" (markerClick)="open($event)" />
+
+<ul class="legend" aria-label="Legend">
+  <li><span class="swatch round critical"></span>Critical incident</li>
+  <li><span class="swatch round high"></span>High</li>
+  <li><span class="swatch round medium"></span>Medium</li>
+  <li><span class="swatch round low"></span>Low</li>
+  <li><span class="swatch square available"></span>Available resource</li>
+  <li><span class="swatch square busy"></span>On an incident</li>
+  <li><span class="swatch square out"></span>Out of service</li>
+</ul>
+<p class="hint">Hover a marker for its name. Click an incident to open it.</p>

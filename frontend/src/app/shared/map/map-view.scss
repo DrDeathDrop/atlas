@@ -1,0 +1,67 @@
+app-map-view {
+  display: block;
+  height: 320px;
+}
+
+.atlas-map {
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.atlas-map.pickable {
+  cursor: crosshair;
+}
+
+.atlas-marker {
+  box-sizing: border-box;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.atlas-marker.incident {
+  border-radius: 50%;
+}
+
+.atlas-marker.incident.critical {
+  background-color: #b3261e;
+}
+
+.atlas-marker.incident.high {
+  background-color: #e8590c;
+}
+
+.atlas-marker.incident.medium {
+  background-color: #f2b705;
+}
+
+.atlas-marker.incident.low {
+  background-color: #6b7280;
+}
+
+.atlas-marker.resource {
+  border-radius: 3px;
+}
+
+.atlas-marker.resource.available {
+  background-color: #1b6e3c;
+}
+
+.atlas-marker.resource.en_route,
+.atlas-marker.resource.on_scene {
+  background-color: #1d4ed8;
+}
+
+.atlas-marker.resource.out_of_service {
+  background-color: #9ca3af;
+}
+
+.atlas-marker.picked {
+  border-radius: 50%;
+  background-color: var(--mat-sys-primary);
+  box-shadow:
+    0 0 0 4px rgba(0, 92, 187, 0.25),
+    0 1px 4px rgba(0, 0, 0, 0.5);
+}
