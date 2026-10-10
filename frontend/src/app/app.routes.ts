@@ -31,6 +31,10 @@ export const routes: Routes = [
           import('./features/incidents/incident-detail').then((module) => module.IncidentDetail),
       },
       {
+        path: 'map',
+        loadComponent: () => import('./features/map/map-page').then((module) => module.MapPage),
+      },
+      {
         path: 'resources',
         loadComponent: () =>
           import('./features/resources/resource-list').then((module) => module.ResourceList),

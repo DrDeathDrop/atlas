@@ -1,17 +1,28 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { EnumLabelPipe } from '../../shared/enum-label.pipe';
+import { MapView } from '../../shared/map/map-view';
+import { MapPoint } from '../../shared/map/map.models';
 import { INCIDENT_CATEGORIES, SEVERITIES, Severity } from './incident.models';
 import { IncidentService } from './incident.service';
 
 @Component({
   selector: 'app-incident-form',
-  imports: [EnumLabelPipe, MatButtonModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, RouterLink],
+  imports: [
+    EnumLabelPipe,
+    MapView,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    RouterLink,
+  ],
   templateUrl: './incident-form.html',
   styleUrl: '../../shared/form-page.scss',
 })
@@ -35,6 +46,24 @@ export class IncidentForm {
 
   protected readonly error = signal<string | null>(null);
   protected readonly submitting = signal(false);
+
+  private readonly values = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+
+  protected readonly location = computed<MapPoint | null>(() => {
+    const { latitude, longitude } = this.values();
+    const valid =
+      typeof latitude === 'number' &&
+      typeof longitude === 'number' &&
+      Math.abs(latitude) <= 90 &&
+      Math.abs(longitude) <= 180;
+    return valid ? { latitude, longitude } : null;
+  });
+
+  protected placeAt(point: MapPoint): void {
+    this.form.patchValue({ latitude: point.latitude, longitude: point.longitude });
+    this.form.controls.latitude.markAsDirty();
+    this.form.controls.longitude.markAsDirty();
+  }
 
   protected submit(): void {
     if (this.form.invalid) {

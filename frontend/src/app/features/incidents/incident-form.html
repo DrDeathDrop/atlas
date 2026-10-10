@@ -64,7 +64,8 @@
       }
     </mat-form-field>
   </div>
-  <p class="hint">Plovdiv city centre is about 42.1354, 24.7453.</p>
+  <p class="hint">Click the map to set the location, or type the coordinates.</p>
+  <app-map-view class="picker" [pickable]="true" [picked]="location()" (pick)="placeAt($event)" />
 
   <mat-form-field appearance="outline">
     <mat-label>People affected (estimate)</mat-label>

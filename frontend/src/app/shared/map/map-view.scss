@@ -65,3 +65,33 @@ app-map-view {
     0 0 0 4px rgba(0, 92, 187, 0.25),
     0 1px 4px rgba(0, 0, 0, 0.5);
 }
+
+.atlas-marker.facility {
+  border: 0;
+  box-shadow: none;
+  background: none;
+}
+
+.atlas-marker.facility::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  box-sizing: border-box;
+  border: 2px solid #ffffff;
+  border-radius: 3px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  transform: rotate(45deg);
+}
+
+.atlas-marker.facility.hospital::after {
+  background-color: #be185d;
+}
+
+.atlas-marker.facility.shelter::after {
+  background-color: #7c3aed;
+}
+
+.atlas-marker.vertex {
+  border-radius: 50%;
+  background-color: #005cbb;
+}

@@ -1,0 +1,46 @@
+.editor {
+  margin-bottom: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font: var(--mat-sys-title-medium);
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.fields mat-form-field {
+  flex: 1 1 180px;
+  max-width: 280px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  margin-left: auto;
+}
+
+.hint {
+  margin: 12px 0 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.count {
+  font-weight: 500;
+}
+
+.error {
+  margin: 8px 0 0;
+  color: var(--mat-sys-error);
+}

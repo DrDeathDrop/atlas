@@ -14,6 +14,8 @@ Code is organised by domain, not by technical layer.
 io.github.drdeathdrop.atlas
 ├── incident/        incidents, categories, lifecycle, priority
 ├── resource/        teams, personnel, vehicles, equipment, allocation
+├── facility/        hospitals and shelters
+├── zone/            evacuation and affected zones, road closures
 ├── user/            accounts, roles, authentication
 ├── audit/           append-only audit log
 ├── notification/    in-app, email and WebSocket notifications
@@ -158,6 +160,31 @@ incident module, which calls the resource module through the
 `ResourceAllocation` interface. The resource module knows nothing about
 incidents beyond an id.
 
+## Map data
+
+The map shows three kinds of geometry, each stored in its natural PostGIS
+type:
+
+| What | Type | Module |
+|---|---|---|
+| Incidents, resources, hospitals, shelters | `Point` | `incident`, `resource`, `facility` |
+| Evacuation and affected zones | `Polygon` | `zone` |
+| Closed roads | `LineString` | `zone` |
+
+The API never exposes database geometry. A zone travels as a list of
+latitude/longitude corners; `GeoShapes` turns that into a polygon, closes the
+ring, and rejects shapes that cannot be stored meaningfully: fewer than three
+different corners, or edges that cross each other. An invalid shape is a 400
+with a readable reason, not a database error.
+
+Zones and road closures are never deleted. Lifting a zone or reopening a road
+records who did it and when, and the row drops out of the "active" list. What
+was closed, and for how long, stays available for later analysis.
+
+A facility has a capacity and an occupancy. The service refuses an occupancy
+above the capacity, and a check constraint in the database enforces the same
+rule.
+
 ## Authentication
 
 Accounts are created by administrators; there is no public sign-up. Each user
@@ -200,8 +227,9 @@ frontend/src/app
 ├── features/
 │   ├── auth/         login page
 │   ├── incidents/    list, detail, dispatch panel, report form
+│   ├── map/          the map page and its drawing panel
 │   └── resources/    list, add form
-└── shared/           small reusable pieces
+└── shared/           small reusable pieces, including the map component
 ```
 
 The access token is kept in memory only. On page load the application calls
@@ -215,6 +243,13 @@ button is a convenience; every rule is enforced again by the API.
 
 State is held in signals inside components and services. There is no state
 management library.
+
+Leaflet is wrapped in a single component, `MapView`. Pages pass it plain
+data, markers, shapes and an optional shape being drawn, and receive plain
+events back. No page touches Leaflet directly, so page tests replace the map
+with a stub and check only what was sent to it. Drawing a zone is the same
+idea: the page collects clicked points in a signal and hands them back to the
+map to display.
 
 ## Technology
 
@@ -233,11 +268,14 @@ management library.
 Implemented: the `user` module (accounts, roles, login, refresh tokens,
 sessions), the `incident` module (reporting, lifecycle, status changes,
 dispatch), the `resource` module (teams and vehicles, nearby search,
-assignment), the `audit` module (append-only log of incident and resource
-events), Liquibase migrations, Docker setup, CI.
+assignment), the `facility` module (hospitals and shelters), the `zone`
+module (evacuation and affected zones, road closures), the `audit` module
+(append-only log of incident and resource events), Liquibase migrations,
+Docker setup, CI.
 
 The frontend covers login, the incident list and detail pages, dispatching,
-the resource list, and forms to report an incident and add a resource.
+the resource list, forms to report an incident and add a resource, and a map
+of incidents, resources, facilities, zones and closed roads, on which zones,
+closures and facilities can be drawn.
 
-Not yet implemented: `notification` and `analytics`, places such as shelters
-and hospitals, the map, and live updates.
+Not yet implemented: `notification` and `analytics`, and live updates.

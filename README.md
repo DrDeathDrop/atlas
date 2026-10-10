@@ -105,10 +105,12 @@ Done:
   the database level
 - Resources: teams and vehicles, a PostGIS search for what is available near
   an incident, and assignment that is safe under concurrent requests
-
 - Operations dashboard: an Angular application to log in, browse and report
   incidents, change their status, dispatch nearby resources and read the
   audit history
+- Map: incidents, resources, hospitals and shelters as markers; evacuation
+  and affected zones as polygons and closed roads as lines, drawn on the map
+  and stored as PostGIS geometry
 
-Planned, in order: map, real-time updates, event system,
+Planned, in order: real-time updates, event system,
 priority scoring, disaster simulator, analytics, observability.

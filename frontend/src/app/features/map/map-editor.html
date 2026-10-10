@@ -1,0 +1,99 @@
+<section class="editor" aria-live="polite">
+  @switch (mode()) {
+    @case ('zone') {
+      <h2>Draw a zone</h2>
+      <form class="fields" [formGroup]="zoneForm" (ngSubmit)="submit()" novalidate>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" maxlength="120" placeholder="Riverside district" />
+          @if (zoneForm.controls.name.hasError('required')) {
+            <mat-error>Enter a name</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Type</mat-label>
+          <select matNativeControl formControlName="type">
+            @for (type of zoneTypes; track type) {
+              <option [value]="type">{{ type | enumLabel }}</option>
+            }
+          </select>
+        </mat-form-field>
+
+        <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ label: 'Save zone' }" />
+      </form>
+    }
+    @case ('closure') {
+      <h2>Close a road</h2>
+      <form class="fields" [formGroup]="closureForm" (ngSubmit)="submit()" novalidate>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Road</mat-label>
+          <input matInput formControlName="roadName" maxlength="120" placeholder="bul. Maritsa" />
+          @if (closureForm.controls.roadName.hasError('required')) {
+            <mat-error>Enter the road</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Reason (optional)</mat-label>
+          <input matInput formControlName="reason" maxlength="255" placeholder="Flooded underpass" />
+        </mat-form-field>
+
+        <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ label: 'Save closure' }" />
+      </form>
+    }
+    @case ('facility') {
+      <h2>Add a facility</h2>
+      <form class="fields" [formGroup]="facilityForm" (ngSubmit)="submit()" novalidate>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" maxlength="120" placeholder="City Hospital" />
+          @if (facilityForm.controls.name.hasError('required')) {
+            <mat-error>Enter a name</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Type</mat-label>
+          <select matNativeControl formControlName="type">
+            @for (type of facilityTypes; track type) {
+              <option [value]="type">{{ type | enumLabel }}</option>
+            }
+          </select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Capacity</mat-label>
+          <input matInput type="number" min="0" formControlName="capacity" placeholder="400" />
+          @if (facilityForm.controls.capacity.invalid) {
+            <mat-error>Enter how many people it can take</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Address (optional)</mat-label>
+          <input matInput formControlName="address" maxlength="255" />
+        </mat-form-field>
+
+        <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ label: 'Save facility' }" />
+      </form>
+    }
+  }
+
+  <p class="hint">
+    {{ hint() }}
+    <span class="count">{{ points().length }} {{ points().length === 1 ? 'point' : 'points' }} so far.</span>
+  </p>
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+</section>
+
+<ng-template #actions let-label="label">
+  <div class="actions">
+    <button mat-button type="button" (click)="undo.emit()" [disabled]="points().length === 0">Undo point</button>
+    <button mat-button type="button" (click)="dismiss.emit()">Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="submitting()">{{ submitting() ? 'Saving…' : label }}</button>
+  </div>
+</ng-template>

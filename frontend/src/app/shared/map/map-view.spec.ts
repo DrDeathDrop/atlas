@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MapView } from './map-view';
-import { MapMarker, MapPoint } from './map.models';
+import { MapMarker, MapPoint, MapShape } from './map.models';
 
 const flood: MapMarker = {
   id: 'i1',
@@ -18,6 +18,29 @@ const ambulance: MapMarker = {
   label: 'AMBULANCE-17',
   latitude: 42.1408,
   longitude: 24.7626,
+};
+
+const zone: MapShape = {
+  id: 'z1',
+  kind: 'zone',
+  tone: 'evacuation',
+  label: 'Riverside · evacuation zone',
+  points: [
+    { latitude: 42.1, longitude: 24.7 },
+    { latitude: 42.1, longitude: 24.8 },
+    { latitude: 42.2, longitude: 24.75 },
+  ],
+};
+
+const closure: MapShape = {
+  id: 'c1',
+  kind: 'closure',
+  tone: 'closure',
+  label: 'bul. Maritsa · road closed',
+  points: [
+    { latitude: 42.14, longitude: 24.74 },
+    { latitude: 42.15, longitude: 24.75 },
+  ],
 };
 
 describe('MapView', () => {
@@ -97,5 +120,34 @@ describe('MapView', () => {
     expect(picks.length).toBe(1);
     expect(Number.isFinite(picks[0].latitude)).toBe(true);
     expect(Number.isFinite(picks[0].longitude)).toBe(true);
+  });
+
+  it('draws zones and closed roads and reports which one was clicked', async () => {
+    await render({ shapes: [zone, closure] });
+    const clicked: MapShape[] = [];
+    fixture.componentInstance.shapeClick.subscribe((shape) => clicked.push(shape));
+
+    expect(element().querySelectorAll('path.atlas-shape.zone.evacuation').length).toBe(1);
+    expect(element().querySelectorAll('path.atlas-shape.closure').length).toBe(1);
+
+    element()
+      .querySelector('path.atlas-shape.closure')!
+      .dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 }));
+
+    expect(clicked).toEqual([closure]);
+  });
+
+  it('shows the shape being drawn with one handle per point', async () => {
+    await render({ pickable: true, draft: { kind: 'area', points: zone.points } });
+
+    expect(element().querySelectorAll('path.atlas-draft').length).toBe(1);
+    expect(element().querySelectorAll('.atlas-marker.vertex').length).toBe(3);
+
+    fixture.componentRef.setInput('draft', null);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(element().querySelectorAll('path.atlas-draft').length).toBe(0);
+    expect(element().querySelectorAll('.atlas-marker.vertex').length).toBe(0);
   });
 });

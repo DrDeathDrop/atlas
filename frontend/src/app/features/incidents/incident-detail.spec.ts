@@ -2,7 +2,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { MapView } from '../../shared/map/map-view';
+import { MapViewStub } from '../../shared/map/map-view.testing';
 import { IncidentDetail } from './incident-detail';
 import { IncidentDispatch } from './incident-dispatch';
 import { AuditEntry, Incident, IncidentStatus } from './incident.models';
@@ -53,8 +56,8 @@ describe('IncidentDetail', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     })
       .overrideComponent(IncidentDetail, {
-        remove: { imports: [IncidentDispatch] },
-        add: { imports: [IncidentDispatchStub] },
+        remove: { imports: [IncidentDispatch, MapView] },
+        add: { imports: [IncidentDispatchStub, MapViewStub] },
       })
       .compileComponents();
 
@@ -99,6 +102,16 @@ describe('IncidentDetail', () => {
     expect(text).toContain('The Maritsa has burst its banks');
     expect(text).toContain('Incident reported');
     expect(text).toContain('Dispatcher');
+  });
+
+  it('marks the incident on a map centred on its location', async () => {
+    await answer(incident, []);
+
+    const map = fixture.debugElement.query(By.directive(MapViewStub)).componentInstance as MapViewStub;
+    expect(map.center()).toEqual({ latitude: 42.1354, longitude: 24.7453 });
+    expect(map.markers().length).toBe(1);
+    expect(map.markers()[0].tone).toBe('critical');
+    expect(map.pickable()).toBe(false);
   });
 
   it('offers exactly the status changes the server allows', async () => {

@@ -77,6 +77,12 @@
             <dd>{{ current.updatedAt | date: 'd MMM y, HH:mm' }}</dd>
           </div>
         </dl>
+        <app-map-view
+          class="location"
+          [markers]="locationMarker()"
+          [center]="{ latitude: current.latitude, longitude: current.longitude }"
+          [zoom]="13"
+        />
       </section>
 
       <app-incident-dispatch [incident]="current" (changed)="load()" />

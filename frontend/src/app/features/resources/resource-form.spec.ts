@@ -1,7 +1,10 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
+import { MapView } from '../../shared/map/map-view';
+import { MapViewStub } from '../../shared/map/map-view.testing';
 import { ResourceForm } from './resource-form';
 
 describe('ResourceForm', () => {
@@ -13,7 +16,9 @@ describe('ResourceForm', () => {
     await TestBed.configureTestingModule({
       imports: [ResourceForm],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
-    }).compileComponents();
+    })
+      .overrideComponent(ResourceForm, { remove: { imports: [MapView] }, add: { imports: [MapViewStub] } })
+      .compileComponents();
 
     fixture = TestBed.createComponent(ResourceForm);
     http = TestBed.inject(HttpTestingController);
@@ -50,6 +55,17 @@ describe('ResourceForm', () => {
     await fixture.whenStable();
 
     http.expectNone('/api/resources');
+  });
+
+  it('fills in the coordinates when a point is clicked on the map', async () => {
+    const map = fixture.debugElement.query(By.directive(MapViewStub)).componentInstance as MapViewStub;
+
+    map.pick.emit({ latitude: 42.15, longitude: 24.76 });
+    await fixture.whenStable();
+
+    expect(element().querySelector<HTMLInputElement>('[formControlName=latitude]')!.value).toBe('42.15');
+    expect(element().querySelector<HTMLInputElement>('[formControlName=longitude]')!.value).toBe('24.76');
+    expect(map.picked()).toEqual({ latitude: 42.15, longitude: 24.76 });
   });
 
   it('adds the resource with an upper-case call sign and returns to the list', () => {

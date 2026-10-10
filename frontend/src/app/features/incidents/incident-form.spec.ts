@@ -1,7 +1,10 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
+import { MapView } from '../../shared/map/map-view';
+import { MapViewStub } from '../../shared/map/map-view.testing';
 import { IncidentForm } from './incident-form';
 
 describe('IncidentForm', () => {
@@ -13,7 +16,9 @@ describe('IncidentForm', () => {
     await TestBed.configureTestingModule({
       imports: [IncidentForm],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
-    }).compileComponents();
+    })
+      .overrideComponent(IncidentForm, { remove: { imports: [MapView] }, add: { imports: [MapViewStub] } })
+      .compileComponents();
 
     fixture = TestBed.createComponent(IncidentForm);
     http = TestBed.inject(HttpTestingController);
@@ -70,6 +75,29 @@ describe('IncidentForm', () => {
     await fixture.whenStable();
 
     http.expectNone('/api/incidents');
+  });
+
+  it('fills in the coordinates when a point is clicked on the map', async () => {
+    const map = fixture.debugElement.query(By.directive(MapViewStub)).componentInstance as MapViewStub;
+    expect(map.pickable()).toBe(true);
+    expect(map.picked()).toBeNull();
+
+    map.pick.emit({ latitude: 42.15, longitude: 24.76 });
+    await fixture.whenStable();
+
+    expect(element().querySelector<HTMLInputElement>('[formControlName=latitude]')!.value).toBe('42.15');
+    expect(element().querySelector<HTMLInputElement>('[formControlName=longitude]')!.value).toBe('24.76');
+    expect(map.picked()).toEqual({ latitude: 42.15, longitude: 24.76 });
+  });
+
+  it('moves the map point when coordinates are typed', async () => {
+    const map = fixture.debugElement.query(By.directive(MapViewStub)).componentInstance as MapViewStub;
+
+    set('latitude', '42.2');
+    set('longitude', '24.8');
+    await fixture.whenStable();
+
+    expect(map.picked()).toEqual({ latitude: 42.2, longitude: 24.8 });
   });
 
   it('reports the incident and opens its page', () => {

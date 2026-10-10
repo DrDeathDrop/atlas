@@ -19,9 +19,39 @@ h1 {
   gap: 8px 16px;
 }
 
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.selection {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-right: auto;
+}
+
+.about span {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .map {
-  height: calc(100vh - 290px);
-  min-height: 360px;
+  height: calc(100vh - 320px);
+  min-height: 420px;
 }
 
 .legend {
@@ -55,6 +85,43 @@ h1 {
 
 .square {
   border-radius: 3px;
+}
+
+.diamond {
+  border-radius: 3px;
+  rotate: 45deg;
+}
+
+.area {
+  border-width: 2px;
+  border-style: solid;
+  box-shadow: none;
+}
+
+.area.evacuation {
+  border-color: #b3261e;
+  background-color: rgba(179, 38, 30, 0.18);
+}
+
+.area.affected {
+  border-color: #b45309;
+  background-color: rgba(180, 83, 9, 0.18);
+}
+
+.line {
+  width: 18px;
+  height: 0;
+  border: 0;
+  border-top: 5px solid #111827;
+  box-shadow: none;
+}
+
+.hospital {
+  background-color: #be185d;
+}
+
+.shelter {
+  background-color: #7c3aed;
 }
 
 .critical {

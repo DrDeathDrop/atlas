@@ -1,9 +1,11 @@
 import { Component, input, output } from '@angular/core';
-import { MapMarker, MapPoint, PLOVDIV } from './map.models';
+import { MapDraft, MapMarker, MapPoint, MapShape, PLOVDIV } from './map.models';
 
 @Component({ selector: 'app-map-view', template: '' })
 export class MapViewStub {
   readonly markers = input<MapMarker[]>([]);
+  readonly shapes = input<MapShape[]>([]);
+  readonly draft = input<MapDraft | null>(null);
   readonly center = input<MapPoint>(PLOVDIV);
   readonly zoom = input(12);
   readonly pickable = input(false);
@@ -12,4 +14,5 @@ export class MapViewStub {
 
   readonly pick = output<MapPoint>();
   readonly markerClick = output<MapMarker>();
+  readonly shapeClick = output<MapShape>();
 }

@@ -43,7 +43,8 @@
       }
     </mat-form-field>
   </div>
-  <p class="hint">Plovdiv city centre is about 42.1354, 24.7453.</p>
+  <p class="hint">Click the map to set the location, or type the coordinates.</p>
+  <app-map-view class="picker" [pickable]="true" [picked]="location()" (pick)="placeAt($event)" />
 
   @if (error(); as message) {
     <p class="error" role="alert">{{ message }}</p>

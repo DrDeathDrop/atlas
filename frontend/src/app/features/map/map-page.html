@@ -7,9 +7,52 @@
     <mat-checkbox [checked]="showResources()" (change)="showResources.set($event.checked)">
       Resources ({{ resources().length }})
     </mat-checkbox>
+    <mat-checkbox [checked]="showFacilities()" (change)="showFacilities.set($event.checked)">
+      Facilities ({{ facilities().length }})
+    </mat-checkbox>
+    <mat-checkbox [checked]="showZones()" (change)="showZones.set($event.checked)">
+      Zones and closures ({{ zones().length + closures().length }})
+    </mat-checkbox>
     <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()">Refresh</button>
   </div>
 </header>
+
+@if (mayEdit() && mode() === null) {
+  <div class="tools">
+    <button mat-stroked-button type="button" (click)="start('zone')">Draw zone</button>
+    <button mat-stroked-button type="button" (click)="start('closure')">Close road</button>
+    <button mat-stroked-button type="button" (click)="start('facility')">Add facility</button>
+  </div>
+}
+
+@if (mode(); as current) {
+  <app-map-editor
+    [mode]="current"
+    [points]="points()"
+    (undo)="undoPoint()"
+    (dismiss)="stop()"
+    (saved)="onSaved()"
+  />
+}
+
+@if (selection(); as selected) {
+  <section class="selection" aria-live="polite">
+    <div class="about">
+      <strong>{{ selected.title }}</strong>
+      <span>{{ selected.detail }}</span>
+    </div>
+    @if (mayEdit() && selected.kind !== 'facility') {
+      <button mat-flat-button type="button" (click)="end(selected)" [disabled]="ending()">
+        {{ selected.kind === 'zone' ? 'Lift zone' : 'Reopen road' }}
+      </button>
+    }
+    <button mat-button type="button" (click)="selection.set(null)">Close</button>
+  </section>
+}
+
+@if (actionError(); as message) {
+  <p class="message error" role="alert">{{ message }}</p>
+}
 
 @if (loading()) {
   <mat-progress-bar mode="indeterminate" />
@@ -19,7 +62,16 @@
   <p class="message error" role="alert">The map data could not be loaded. Check that the server is running and try again.</p>
 }
 
-<app-map-view class="map" [markers]="markers()" (markerClick)="open($event)" />
+<app-map-view
+  class="map"
+  [markers]="markers()"
+  [shapes]="shapes()"
+  [draft]="draft()"
+  [pickable]="mode() !== null"
+  (pick)="addPoint($event)"
+  (markerClick)="openMarker($event)"
+  (shapeClick)="openShape($event)"
+/>
 
 <ul class="legend" aria-label="Legend">
   <li><span class="swatch round critical"></span>Critical incident</li>
@@ -29,5 +81,10 @@
   <li><span class="swatch square available"></span>Available resource</li>
   <li><span class="swatch square busy"></span>On an incident</li>
   <li><span class="swatch square out"></span>Out of service</li>
+  <li><span class="swatch diamond hospital"></span>Hospital</li>
+  <li><span class="swatch diamond shelter"></span>Shelter</li>
+  <li><span class="swatch area evacuation"></span>Evacuation zone</li>
+  <li><span class="swatch area affected"></span>Affected zone</li>
+  <li><span class="swatch line"></span>Closed road</li>
 </ul>
-<p class="hint">Hover a marker for its name. Click an incident to open it.</p>
+<p class="hint">Hover anything for its name. Click an incident to open it; click a facility, zone or closed road for details.</p>

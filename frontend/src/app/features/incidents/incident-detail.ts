@@ -1,11 +1,13 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { EnumLabelPipe } from '../../shared/enum-label.pipe';
+import { MapView } from '../../shared/map/map-view';
+import { MapMarker } from '../../shared/map/map.models';
 import { SeverityBadge, StatusBadge } from './badges';
 import { IncidentDispatch } from './incident-dispatch';
 import { AuditEntry, Incident, IncidentStatus } from './incident.models';
@@ -17,6 +19,7 @@ import { IncidentService } from './incident.service';
     DatePipe,
     EnumLabelPipe,
     IncidentDispatch,
+    MapView,
     MatButtonModule,
     MatProgressBarModule,
     RouterLink,
@@ -38,6 +41,22 @@ export class IncidentDetail implements OnInit {
   protected readonly loadError = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
   protected readonly changing = signal(false);
+
+  protected readonly locationMarker = computed<MapMarker[]>(() => {
+    const incident = this.incident();
+    return incident === null
+      ? []
+      : [
+          {
+            id: incident.id,
+            kind: 'incident',
+            tone: incident.severity.toLowerCase(),
+            label: `${incident.reference} · ${incident.title}`,
+            latitude: incident.latitude,
+            longitude: incident.longitude,
+          },
+        ];
+  });
 
   ngOnInit(): void {
     this.load();
