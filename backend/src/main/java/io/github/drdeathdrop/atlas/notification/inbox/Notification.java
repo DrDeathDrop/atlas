@@ -35,6 +35,9 @@ public class Notification {
     @Column(updatable = false)
     private UUID incidentId;
 
+    @Column(updatable = false)
+    private UUID eventId;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -44,11 +47,12 @@ public class Notification {
     protected Notification() {
     }
 
-    public Notification(UUID recipientId, NotificationType type, String title, UUID incidentId) {
+    public Notification(UUID recipientId, NotificationType type, String title, UUID incidentId, UUID eventId) {
         this.recipientId = recipientId;
         this.type = type;
         this.title = title;
         this.incidentId = incidentId;
+        this.eventId = eventId;
     }
 
     public boolean isRead() {

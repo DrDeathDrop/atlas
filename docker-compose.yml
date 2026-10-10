@@ -16,6 +16,23 @@ services:
       timeout: 3s
       retries: 10
 
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: atlas-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: atlas
+      RABBITMQ_DEFAULT_PASS: atlas
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - atlas-rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   backend:
     profiles: ["full"]
     build: ./backend
@@ -25,10 +42,13 @@ services:
       ATLAS_DB_USER: atlas
       ATLAS_DB_PASSWORD: atlas
       ATLAS_DEMO_DATA: "true"
+      ATLAS_RABBIT_HOST: rabbitmq
     ports:
       - "8080:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   frontend:
@@ -42,3 +62,4 @@ services:
 
 volumes:
   atlas-postgres-data:
+  atlas-rabbitmq-data:

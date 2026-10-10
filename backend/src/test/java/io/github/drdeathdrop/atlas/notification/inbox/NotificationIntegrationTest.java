@@ -60,6 +60,7 @@ class NotificationIntegrationTest {
     @Test
     void reportingAnIncidentNotifiesOtherDispatchersButNotTheReporterOrViewers() {
         IncidentSummary incident = report();
+        awaitUnread(colleague, 1);
 
         List<NotificationView> received = notificationService.latestFor(colleague);
         assertThat(received).hasSize(1);
@@ -78,6 +79,7 @@ class NotificationIntegrationTest {
         IncidentSummary incident = report();
 
         incidentService.changeStatus(incident.id(), IncidentStatus.VERIFIED, colleague, Role.DISPATCHER);
+        awaitUnread(reporter, 1);
 
         assertThat(notificationService.latestFor(reporter))
                 .extracting(NotificationView::title)
@@ -87,6 +89,7 @@ class NotificationIntegrationTest {
     @Test
     void notificationsCanBeMarkedReadOnlyByTheirOwner() {
         report();
+        awaitUnread(colleague, 1);
         UUID notification = notificationService.latestFor(colleague).get(0).id();
 
         assertThatThrownBy(() -> notificationService.markRead(notification, viewer))
@@ -103,11 +106,27 @@ class NotificationIntegrationTest {
     void everythingCanBeMarkedReadAtOnce() {
         report();
         report();
-        assertThat(notificationService.unreadCountFor(colleague).count()).isEqualTo(2);
+        awaitUnread(colleague, 2);
 
         notificationService.markAllRead(colleague);
 
         assertThat(notificationService.unreadCountFor(colleague).count()).isZero();
+    }
+
+    private void awaitUnread(UUID user, long expected) {
+        long deadline = System.currentTimeMillis() + 15_000;
+        while (notificationService.unreadCountFor(user).count() < expected) {
+            if (System.currentTimeMillis() > deadline) {
+                throw new AssertionError("Expected " + expected + " unread notifications within 15 seconds. "
+                        + "Is RabbitMQ running? Start it with: docker compose up -d");
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError("Interrupted while waiting for notifications", exception);
+            }
+        }
     }
 
     private IncidentSummary report() {

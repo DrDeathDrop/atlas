@@ -19,6 +19,7 @@ io.github.drdeathdrop.atlas
 ├── user/            accounts, roles, authentication
 ├── audit/           append-only audit log
 ├── notification/    live updates over WebSocket; in-app and email notifications
+├── messaging/       outbox, RabbitMQ exchanges and queues
 ├── analytics/       statistics and reports
 └── shared/          small: base types, error model, security helpers
 ```
@@ -219,6 +220,54 @@ the next attempt. Bursts of notices are collapsed into one reload.
 The broker is Spring's in-memory one, which is enough for a single
 application instance. Running several instances would need a shared broker.
 
+## Events and messaging
+
+Some work does not have to happen at the moment of a change, but must not be
+lost either: today notifications, later analytics. That work is driven by
+messages on RabbitMQ.
+
+```
+service ──(same transaction)──> outbox table
+                                     │  relay, every second
+                                     v
+                         exchange `atlas.events` (topic)
+                                     │  incident.*  resource.*
+                                     v
+                         queue `atlas.notifications` ──> consumer
+                                     │  rejected
+                                     v
+                         queue `atlas.notifications.dead`
+```
+
+**Outbox.** Saving a change and sending a message are two different systems,
+and one of them can fail after the other succeeded. So the service does not
+send anything. A listener writes the event as a row in `outbox_events`
+inside the business transaction: either both the change and the row exist, or
+neither. A scheduled relay then reads unpublished rows, publishes them, and
+marks them. If the broker is down, rows wait. The relay locks rows with
+`FOR UPDATE SKIP LOCKED`, so two application instances never publish the same
+row at the same time.
+
+**At least once.** The relay may publish a row and crash before marking it,
+so a message can arrive twice. Consumers therefore have to be idempotent.
+Every event has an id; the notification consumer skips an event it has
+already handled, and a unique index on (event, recipient) backs that up.
+
+**Failures.** A message that cannot be read or handled is rejected without
+requeueing and lands in a dead-letter queue, where it can be inspected,
+instead of being retried forever or silently dropped.
+
+**What does not go through the broker.** The audit log is written in the
+transaction, because it must be exact. Live "something changed" notices are
+sent in memory after commit, because losing one costs nothing.
+
+| Listener | When | Why |
+|---|---|---|
+| Audit | Inside the transaction | No change without a record |
+| Outbox writer | Inside the transaction | No change without its event |
+| Live notices | After commit, in memory | Best effort, must be fast |
+| Notifications | Later, from RabbitMQ | May be delayed, must not be lost |
+
 ## Notifications
 
 Some changes also leave a stored notification for the people who need to
@@ -231,12 +280,9 @@ know. A bell in the top bar shows the unread count and the latest items.
 
 Whoever made the change is not notified about it.
 
-Notifications are written after the original transaction commits, in a
-transaction of their own (`REQUIRES_NEW`). A failure to notify must never
-undo an incident report, and a listener that runs after commit has no open
-transaction left to write in. The price is that a crash between the two
-transactions loses the notification; that is acceptable for a convenience
-feature and would not be for the audit log.
+Notifications are created by a consumer of the `atlas.notifications` queue,
+a moment after the change. If the consumer or the broker is down, the events
+wait and the notifications appear when it is back.
 
 The `notification` module asks the `user` module who has a role through the
 `UserDirectory` interface and receives ids only. One row is stored per
@@ -323,6 +369,7 @@ map to display.
 | Persistence | Spring Data JPA, Hibernate |
 | Database | PostgreSQL 17 + PostGIS |
 | Migrations | Liquibase |
+| Messaging | RabbitMQ, with a transactional outbox |
 | Live updates | WebSocket with STOMP, Spring's in-memory broker |
 | Frontend | Angular, Angular Material, Leaflet, stompjs |
 | Local services | Docker Compose |
@@ -335,7 +382,8 @@ dispatch), the `resource` module (teams and vehicles, nearby search,
 assignment), the `facility` module (hospitals and shelters), the `zone`
 module (evacuation and affected zones, road closures), the `audit` module
 (append-only log of incident and resource events), live updates and stored
-notifications in the `notification` module, Liquibase migrations, Docker setup, CI.
+notifications in the `notification` module, the `messaging` module (outbox
+and RabbitMQ), Liquibase migrations, Docker setup, CI.
 
 The frontend covers login, the incident list and detail pages, dispatching,
 the resource list, forms to report an incident and add a resource, and a map

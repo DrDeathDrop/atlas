@@ -15,6 +15,7 @@ today.
 | Backend | Java 25, Spring Boot 4.1, Spring Data JPA |
 | Frontend | Angular 22 |
 | Database | PostgreSQL 17 with PostGIS, Liquibase migrations |
+| Messaging | RabbitMQ, WebSocket (STOMP) |
 | Infrastructure | Docker Compose, GitHub Actions |
 
 The design is described in [docs/architecture.md](docs/architecture.md).
@@ -23,13 +24,15 @@ The design is described in [docs/architecture.md](docs/architecture.md).
 
 You need JDK 25, Node.js 24 or newer, and Docker.
 
-1. Start the database:
+1. Start the database and the message broker:
 
    ```
    docker compose up -d
    ```
 
-   It listens on port 5433.
+   PostgreSQL listens on port 5433 and RabbitMQ on 5672. The RabbitMQ
+   management page is at http://localhost:15672 (user `atlas`, password
+   `atlas`).
 
 2. Start the backend, from `backend/`:
 
@@ -70,6 +73,8 @@ All settings have defaults that work locally. Outside local development, set:
 | `ATLAS_DB_URL` | Database address |
 | `ATLAS_DB_USER`, `ATLAS_DB_PASSWORD` | The database owner, used only to run migrations |
 | `ATLAS_DB_APP_PASSWORD` | Password of `atlas_app`, the restricted user the application runs as |
+| `ATLAS_RABBIT_HOST`, `ATLAS_RABBIT_PORT` | RabbitMQ address |
+| `ATLAS_RABBIT_USER`, `ATLAS_RABBIT_PASSWORD` | RabbitMQ login |
 
 If `ATLAS_ADMIN_PASSWORD` is not set, a random password is generated and
 written to the log once, on the first start.
@@ -114,8 +119,8 @@ Done:
 
 - Live updates: changes are announced over WebSocket (STOMP) after the
   transaction commits, and open pages reload themselves
-- Notifications: stored per user after commit, with an unread count that
-  updates live
+- Notifications: stored per user, with an unread count that updates live
+- Event system: a transactional outbox publishes events to RabbitMQ;
+  consumers are idempotent and failed messages go to a dead-letter queue
 
-Planned, in order: event system,
-priority scoring, disaster simulator, analytics, observability.
+Planned, in order: priority scoring, disaster simulator, analytics, observability.

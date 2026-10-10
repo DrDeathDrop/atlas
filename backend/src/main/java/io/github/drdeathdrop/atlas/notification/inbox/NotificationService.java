@@ -5,7 +5,6 @@ import io.github.drdeathdrop.atlas.user.Role;
 import io.github.drdeathdrop.atlas.user.UserDirectory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -26,12 +25,16 @@ public class NotificationService {
         this.events = events;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void notifyRoles(Collection<Role> roles, UUID exceptUser, NotificationType type, String title,
-                            UUID incidentId) {
+    @Transactional
+    public void notifyRoles(UUID eventId, Collection<Role> roles, UUID exceptUser, NotificationType type,
+                            String title, UUID incidentId) {
+        if (repository.existsByEventId(eventId)) {
+            return;
+        }
+
         List<Notification> notifications = users.enabledUserIdsWithRoles(roles).stream()
                 .filter(recipient -> !recipient.equals(exceptUser))
-                .map(recipient -> new Notification(recipient, type, title, incidentId))
+                .map(recipient -> new Notification(recipient, type, title, incidentId, eventId))
                 .toList();
 
         if (notifications.isEmpty()) {

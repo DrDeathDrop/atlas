@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +33,7 @@ class NotificationServiceTest {
     private static final UUID OTHER_DISPATCHER = UUID.randomUUID();
     private static final UUID ADMIN = UUID.randomUUID();
     private static final UUID INCIDENT = UUID.randomUUID();
+    private static final UUID EVENT = UUID.randomUUID();
 
     @Mock
     private NotificationRepository repository;
@@ -49,7 +51,7 @@ class NotificationServiceTest {
     void everyoneWithTheRoleIsNotifiedExceptWhoeverMadeTheChange() {
         when(users.enabledUserIdsWithRoles(COORDINATORS)).thenReturn(List.of(ACTOR, OTHER_DISPATCHER, ADMIN));
 
-        service.notifyRoles(COORDINATORS, ACTOR, NotificationType.INCIDENT_REPORTED,
+        service.notifyRoles(EVENT, COORDINATORS, ACTOR, NotificationType.INCIDENT_REPORTED,
                 "INC-2026-0001 was reported", INCIDENT);
 
         @SuppressWarnings("unchecked")
@@ -61,6 +63,7 @@ class NotificationServiceTest {
             assertThat(notification.getType()).isEqualTo(NotificationType.INCIDENT_REPORTED);
             assertThat(notification.getTitle()).isEqualTo("INC-2026-0001 was reported");
             assertThat(notification.getIncidentId()).isEqualTo(INCIDENT);
+            assertThat(notification.getEventId()).isEqualTo(EVENT);
             assertThat(notification.isRead()).isFalse();
         });
         verify(events).publishEvent(new NotificationsCreated(2));
@@ -70,7 +73,7 @@ class NotificationServiceTest {
     void nothingIsStoredOrAnnouncedWhenNobodyElseHasTheRole() {
         when(users.enabledUserIdsWithRoles(COORDINATORS)).thenReturn(List.of(ACTOR));
 
-        service.notifyRoles(COORDINATORS, ACTOR, NotificationType.INCIDENT_REPORTED,
+        service.notifyRoles(EVENT, COORDINATORS, ACTOR, NotificationType.INCIDENT_REPORTED,
                 "INC-2026-0001 was reported", INCIDENT);
 
         verify(repository, never()).saveAll(anyList());
@@ -78,9 +81,21 @@ class NotificationServiceTest {
     }
 
     @Test
+    void anEventThatWasAlreadyHandledIsNotStoredTwice() {
+        when(repository.existsByEventId(EVENT)).thenReturn(true);
+
+        service.notifyRoles(EVENT, COORDINATORS, ACTOR, NotificationType.INCIDENT_REPORTED,
+                "INC-2026-0001 was reported", INCIDENT);
+
+        verify(repository, never()).saveAll(anyList());
+        verify(events, never()).publishEvent(any());
+        verifyNoInteractions(users);
+    }
+
+    @Test
     void markReadMarksTheUsersOwnNotification() {
         UUID id = UUID.randomUUID();
-        Notification notification = new Notification(ADMIN, NotificationType.INCIDENT_REPORTED, "x", INCIDENT);
+        Notification notification = new Notification(ADMIN, NotificationType.INCIDENT_REPORTED, "x", INCIDENT, EVENT);
         when(repository.findByIdAndRecipientId(id, ADMIN)).thenReturn(Optional.of(notification));
 
         service.markRead(id, ADMIN);
