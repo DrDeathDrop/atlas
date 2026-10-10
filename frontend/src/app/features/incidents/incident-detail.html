@@ -88,6 +88,24 @@
       <app-incident-dispatch [incident]="current" (changed)="load()" />
     </div>
 
+    <div class="stack">
+      @if (priority(); as ranking) {
+        <section class="panel">
+          <h2 class="with-badge">Priority <app-priority-badge [priority]="ranking" /></h2>
+          <ul class="factors">
+            @for (factor of ranking.factors; track factor.name) {
+              <li>
+                <span>{{ factor.reason }}</span>
+                <span class="points" [class.negative]="factor.points < 0">
+                  {{ factor.points > 0 ? '+' : '' }}{{ factor.points }}
+                </span>
+              </li>
+            }
+          </ul>
+          <p class="note">A score from 0 to 100. It rises while nobody has been sent.</p>
+        </section>
+      }
+
     @if (history(); as entries) {
       <section class="panel">
         <h2>History</h2>
@@ -104,5 +122,6 @@
         </ol>
       </section>
     }
+    </div>
   </div>
 }

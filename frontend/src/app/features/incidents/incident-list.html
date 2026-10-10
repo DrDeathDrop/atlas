@@ -1,6 +1,16 @@
 <header class="header">
   <h1>Incidents</h1>
   <div class="header-actions">
+    <mat-button-toggle-group
+      class="order"
+      [value]="order()"
+      (change)="order.set($event.value)"
+      aria-label="Order"
+      hideSingleSelectionIndicator
+    >
+      <mat-button-toggle value="priority">By priority</mat-button-toggle>
+      <mat-button-toggle value="newest">Newest first</mat-button-toggle>
+    </mat-button-toggle-group>
     <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()">Refresh</button>
     @if (mayReport()) {
       <a mat-flat-button routerLink="/incidents/new">Report incident</a>
@@ -18,7 +28,14 @@
   <p class="message">No incidents have been reported yet.</p>
 } @else if (incidents().length > 0) {
   <div class="table-wrapper">
-    <table mat-table [dataSource]="incidents()">
+    <table mat-table [dataSource]="rows()">
+      <ng-container matColumnDef="priority">
+        <th mat-header-cell *matHeaderCellDef>Priority</th>
+        <td mat-cell *matCellDef="let incident">
+          <app-priority-badge [priority]="priorities().get(incident.id)" />
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="reference">
         <th mat-header-cell *matHeaderCellDef>Reference</th>
         <td mat-cell *matCellDef="let incident" class="reference">

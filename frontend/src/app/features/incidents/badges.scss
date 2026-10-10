@@ -49,3 +49,34 @@
   border-color: var(--mat-sys-outline-variant);
   color: var(--mat-sys-on-surface-variant);
 }
+
+.score {
+  min-width: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.priority-urgent {
+  background-color: #b3261e;
+  color: #ffffff;
+}
+
+.priority-high {
+  background-color: #ffdbc8;
+  color: #5c1900;
+}
+
+.priority-elevated {
+  background-color: #ffe9a8;
+  color: #3f2e00;
+}
+
+.priority-low {
+  background-color: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.none {
+  color: var(--mat-sys-on-surface-variant);
+}

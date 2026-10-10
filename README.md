@@ -122,5 +122,7 @@ Done:
 - Notifications: stored per user, with an unread count that updates live
 - Event system: a transactional outbox publishes events to RabbitMQ;
   consumers are idempotent and failed messages go to a dead-letter queue
+- Priority scoring: an explainable 0 to 100 score per open incident, used to
+  order the incident list
 
-Planned, in order: priority scoring, disaster simulator, analytics, observability.
+Planned, in order: disaster simulator, analytics, observability.

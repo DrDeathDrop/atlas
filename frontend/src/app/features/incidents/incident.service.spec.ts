@@ -64,4 +64,12 @@ describe('IncidentService', () => {
     expect(request.method).toBe('PATCH');
     expect(request.body).toEqual({ status: 'VERIFIED' });
   });
+
+  it('reads the priorities of open incidents and of one incident', () => {
+    service.priorities().subscribe();
+    service.priority('abc').subscribe();
+
+    expect(http.expectOne('/api/incidents/priorities').request.method).toBe('GET');
+    expect(http.expectOne('/api/incidents/abc/priority').request.method).toBe('GET');
+  });
 });

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -143,5 +144,11 @@ public class ResourceAllocationService implements ResourceAllocation {
                 row.getLongitude(),
                 row.getTeamId());
         return new NearbyResource(summary, row.getDistanceMeters());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<UUID> incidentsWithOpenAssignments() {
+        return assignmentRepository.findIncidentIdsWithOpenAssignments();
     }
 }

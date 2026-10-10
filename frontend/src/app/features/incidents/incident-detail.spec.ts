@@ -10,7 +10,7 @@ import { MapView } from '../../shared/map/map-view';
 import { MapViewStub } from '../../shared/map/map-view.testing';
 import { IncidentDetail } from './incident-detail';
 import { IncidentDispatch } from './incident-dispatch';
-import { AuditEntry, Incident, IncidentStatus } from './incident.models';
+import { AuditEntry, Incident, IncidentStatus, Priority } from './incident.models';
 
 const incident: Incident = {
   id: 'a1',
@@ -47,6 +47,18 @@ class IncidentDispatchStub {
   readonly incident = input.required<Incident>();
   readonly changed = output<void>();
 }
+
+const ranking: Priority = {
+  incidentId: 'a1',
+  score: 65,
+  level: 'HIGH',
+  factors: [
+    { name: 'Severity', points: 40, reason: 'Critical severity' },
+    { name: 'People affected', points: 22, reason: '25000 people affected' },
+    { name: 'Category', points: 10, reason: 'Flood incident' },
+    { name: 'Contained', points: -7, reason: 'The incident is contained' },
+  ],
+};
 
 describe('IncidentDetail', () => {
   let fixture: ComponentFixture<IncidentDetail>;
@@ -93,6 +105,7 @@ describe('IncidentDetail', () => {
   ): Promise<void> {
     http.expectOne('/api/incidents/a1').flush(current);
     http.expectOne('/api/incidents/a1/allowed-transitions').flush(transitions);
+    http.expectOne('/api/incidents/a1/priority').flush(ranking);
     const historyRequest = http.expectOne('/api/audit/incidents/a1');
     if (history === 'forbidden') {
       historyRequest.flush(null, { status: 403, statusText: 'Forbidden' });
@@ -182,6 +195,7 @@ describe('IncidentDetail', () => {
   it('says so when the incident does not exist', async () => {
     http.expectOne('/api/incidents/a1').flush(null, { status: 404, statusText: 'Not Found' });
     expect(http.expectOne('/api/incidents/a1/allowed-transitions').cancelled).toBe(true);
+    http.expectOne('/api/incidents/a1/priority').flush(null, { status: 404, statusText: 'Not Found' });
     http.expectOne('/api/audit/incidents/a1').flush([]);
     await fixture.whenStable();
 
@@ -198,5 +212,22 @@ describe('IncidentDetail', () => {
     await answer({ ...incident, status: 'VERIFIED' }, ['ACTIVE']);
 
     expect(buttons()).toEqual(['Activate']);
+  });
+
+  it('explains the priority score factor by factor', async () => {
+    await answer(incident, []);
+
+    const panel = Array.from(element().querySelectorAll('.panel')).find((candidate) =>
+      candidate.querySelector('h2')?.textContent?.includes('Priority'),
+    )!;
+    expect(panel.querySelector('.priority-high')!.textContent!.trim()).toBe('65');
+
+    const rows = Array.from(panel.querySelectorAll('.factors li')).map((row) => row.textContent!.replace(/\s+/g, ' ').trim());
+    expect(rows).toEqual([
+      'Critical severity +40',
+      '25000 people affected +22',
+      'Flood incident +10',
+      'The incident is contained -7',
+    ]);
   });
 });

@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { EnumLabelPipe } from '../../shared/enum-label.pipe';
-import { IncidentStatus, Severity } from './incident.models';
+import { IncidentStatus, Priority, Severity } from './incident.models';
 
 @Component({
   selector: 'app-severity-badge',
@@ -20,4 +20,26 @@ export class SeverityBadge {
 })
 export class StatusBadge {
   readonly status = input.required<IncidentStatus>();
+}
+
+@Component({
+  selector: 'app-priority-badge',
+  template: `
+    @if (priority(); as current) {
+      <span class="badge score" [class]="'priority-' + current.level.toLowerCase()" [title]="title(current)">
+        {{ current.score }}
+      </span>
+    } @else {
+      <span class="none" aria-label="No priority">–</span>
+    }
+  `,
+  styleUrl: './badges.scss',
+})
+export class PriorityBadge {
+  readonly priority = input<Priority | undefined>(undefined);
+
+  protected title(priority: Priority): string {
+    const level = priority.level.charAt(0) + priority.level.slice(1).toLowerCase();
+    return `${level} priority, ${priority.score} of 100`;
+  }
 }

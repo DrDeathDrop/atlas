@@ -73,3 +73,18 @@ export interface Incident {
   createdAt: string;
   updatedAt: string;
 }
+
+export type PriorityLevel = 'LOW' | 'ELEVATED' | 'HIGH' | 'URGENT';
+
+export interface PriorityFactor {
+  name: string;
+  points: number;
+  reason: string;
+}
+
+export interface Priority {
+  incidentId: string;
+  score: number;
+  level: PriorityLevel;
+  factors: PriorityFactor[];
+}

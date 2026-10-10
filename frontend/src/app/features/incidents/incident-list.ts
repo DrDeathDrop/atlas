@@ -2,14 +2,15 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { LiveUpdates } from '../../core/live/live-updates';
 import { EnumLabelPipe } from '../../shared/enum-label.pipe';
-import { SeverityBadge, StatusBadge } from './badges';
-import { Incident } from './incident.models';
+import { PriorityBadge, SeverityBadge, StatusBadge } from './badges';
+import { Incident, Priority } from './incident.models';
 import { IncidentService } from './incident.service';
 
 @Component({
@@ -18,8 +19,10 @@ import { IncidentService } from './incident.service';
     DatePipe,
     EnumLabelPipe,
     MatButtonModule,
+    MatButtonToggleModule,
     MatProgressBarModule,
     MatTableModule,
+    PriorityBadge,
     RouterLink,
     SeverityBadge,
     StatusBadge,
@@ -34,8 +37,30 @@ export class IncidentList implements OnInit {
 
   protected readonly mayReport = computed(() => this.auth.hasRole('ADMIN', 'DISPATCHER'));
 
-  protected readonly columns = ['reference', 'title', 'category', 'severity', 'status', 'affectedPeople', 'createdAt'];
+  protected readonly columns = [
+    'priority',
+    'reference',
+    'title',
+    'category',
+    'severity',
+    'status',
+    'affectedPeople',
+    'createdAt',
+  ];
   protected readonly incidents = signal<Incident[]>([]);
+  protected readonly priorities = signal<Map<string, Priority>>(new Map());
+  protected readonly order = signal<'priority' | 'newest'>('priority');
+
+  protected readonly rows = computed(() => {
+    const incidents = this.incidents();
+    if (this.order() === 'newest') {
+      return incidents;
+    }
+
+    const priorities = this.priorities();
+    const score = (incident: Incident) => priorities.get(incident.id)?.score ?? -1;
+    return [...incidents].sort((first, second) => score(second) - score(first));
+  });
   protected readonly loading = signal(true);
   protected readonly failed = signal(false);
 
@@ -63,6 +88,11 @@ export class IncidentList implements OnInit {
         this.failed.set(true);
         this.loading.set(false);
       },
+    });
+
+    this.incidentService.priorities().subscribe({
+      next: (priorities) => this.priorities.set(new Map(priorities.map((priority) => [priority.incidentId, priority]))),
+      error: () => this.priorities.set(new Map()),
     });
   }
 }

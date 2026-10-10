@@ -10,9 +10,9 @@ import { LiveUpdates } from '../../core/live/live-updates';
 import { EnumLabelPipe } from '../../shared/enum-label.pipe';
 import { MapView } from '../../shared/map/map-view';
 import { MapMarker } from '../../shared/map/map.models';
-import { SeverityBadge, StatusBadge } from './badges';
+import { PriorityBadge, SeverityBadge, StatusBadge } from './badges';
 import { IncidentDispatch } from './incident-dispatch';
-import { AuditEntry, Incident, IncidentStatus } from './incident.models';
+import { AuditEntry, Incident, IncidentStatus, Priority } from './incident.models';
 import { IncidentService } from './incident.service';
 
 @Component({
@@ -24,6 +24,7 @@ import { IncidentService } from './incident.service';
     MapView,
     MatButtonModule,
     MatProgressBarModule,
+    PriorityBadge,
     RouterLink,
     SeverityBadge,
     StatusBadge,
@@ -40,6 +41,7 @@ export class IncidentDetail implements OnInit {
   protected readonly incident = signal<Incident | null>(null);
   protected readonly transitions = signal<IncidentStatus[]>([]);
   protected readonly history = signal<AuditEntry[] | null>(null);
+  protected readonly priority = signal<Priority | null>(null);
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
@@ -154,6 +156,11 @@ export class IncidentDetail implements OnInit {
             : 'The incident could not be loaded. Check that the server is running and try again.',
         );
       },
+    });
+
+    this.incidentService.priority(this.id()).subscribe({
+      next: (priority) => this.priority.set(priority),
+      error: () => this.priority.set(null),
     });
 
     this.incidentService.history(this.id()).subscribe({

@@ -129,6 +129,36 @@ The rules live in one class, `IncidentLifecycle`, which has no dependency on
 Spring or the database. A move is validated before anything is modified, so a
 refused move changes nothing and produces no event.
 
+## Priority
+
+Every open incident has a priority score from 0 to 100, so that a dispatcher
+facing twenty incidents sees which one needs attention first. The incident
+list is ordered by it.
+
+| Factor | Points |
+|---|---|
+| Severity | 10 (low) to 40 (critical) |
+| People affected | 0 to 25, on a logarithmic scale |
+| Category | 0 to 15, by how quickly that kind of incident threatens life |
+| Nobody sent yet (verified or active) | 10 |
+| Time waiting, while unverified or unattended | 1 per 6 minutes, up to 10 |
+| Contained | the total is halved |
+
+Closed incidents score 0. The maximum of every factor adds up to exactly 100.
+
+The scale for people is logarithmic because the difference between 10 and
+100 people matters more to the ranking than the difference between 10,000
+and 10,090.
+
+The score is explainable: the API returns the factors with their points and a
+reason, and the incident page shows them. A dispatcher who disagrees with a
+ranking can see why it came out that way.
+
+The score is calculated when it is read and never stored. It depends on the
+current time and on whether resources are assigned, so a stored value would
+be stale within minutes. The calculation is a pure function of its inputs
+and the time, which makes it cheap and easy to test.
+
 ## Resources and dispatch
 
 Teams and vehicles are stored in one `resources` table, distinguished by
@@ -379,7 +409,7 @@ map to display.
 Implemented: the `user` module (accounts, roles, login, refresh tokens,
 sessions), the `incident` module (reporting, lifecycle, status changes,
 dispatch), the `resource` module (teams and vehicles, nearby search,
-assignment), the `facility` module (hospitals and shelters), the `zone`
+assignment), priority scoring of incidents, the `facility` module (hospitals and shelters), the `zone`
 module (evacuation and affected zones, road closures), the `audit` module
 (append-only log of incident and resource events), live updates and stored
 notifications in the `notification` module, the `messaging` module (outbox

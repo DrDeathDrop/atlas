@@ -3,6 +3,7 @@ package io.github.drdeathdrop.atlas.resource;
 import io.github.drdeathdrop.atlas.user.Role;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface ResourceAllocation {
@@ -15,4 +16,6 @@ public interface ResourceAllocation {
     List<AssignmentSummary> releaseAllFor(UUID incidentId, UUID releasedBy, Role role);
 
     List<AssignmentSummary> assignmentsFor(UUID incidentId);
+
+    Set<UUID> incidentsWithOpenAssignments();
 }

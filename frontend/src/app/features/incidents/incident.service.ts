@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AuditEntry, Incident, IncidentStatus, ReportIncidentRequest } from './incident.models';
+import { AuditEntry, Incident, IncidentStatus, Priority, ReportIncidentRequest } from './incident.models';
 
 @Injectable({ providedIn: 'root' })
 export class IncidentService {
@@ -21,6 +21,14 @@ export class IncidentService {
 
   allowedTransitions(id: string): Observable<IncidentStatus[]> {
     return this.http.get<IncidentStatus[]>(`/api/incidents/${id}/allowed-transitions`);
+  }
+
+  priorities(): Observable<Priority[]> {
+    return this.http.get<Priority[]>('/api/incidents/priorities');
+  }
+
+  priority(id: string): Observable<Priority> {
+    return this.http.get<Priority>(`/api/incidents/${id}/priority`);
   }
 
   history(id: string): Observable<AuditEntry[]> {

@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { LiveUpdates } from '../../core/live/live-updates';
 import { LiveUpdatesStub } from '../../core/live/live-updates.testing';
 import { IncidentList } from './incident-list';
-import { Incident } from './incident.models';
+import { Incident, Priority } from './incident.models';
 
 const flood: Incident = {
   id: 'a1',
@@ -64,6 +64,7 @@ describe('IncidentList', () => {
 
   it('shows one row per incident with readable labels', async () => {
     http.expectOne('/api/incidents').flush([flood, fire]);
+    http.expectOne('/api/incidents/priorities').flush([]);
     await fixture.whenStable();
 
     const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('tr[mat-row]');
@@ -78,6 +79,7 @@ describe('IncidentList', () => {
 
   it('says so when there are no incidents', async () => {
     http.expectOne('/api/incidents').flush([]);
+    http.expectOne('/api/incidents/priorities').flush([]);
     await fixture.whenStable();
 
     expect(text()).toContain('No incidents have been reported yet');
@@ -86,12 +88,16 @@ describe('IncidentList', () => {
 
   it('shows an error and can retry when loading fails', async () => {
     http.expectOne('/api/incidents').flush(null, { status: 500, statusText: 'Server Error' });
+    http.expectOne('/api/incidents/priorities').flush([]);
     await fixture.whenStable();
 
     expect(text()).toContain('could not be loaded');
 
-    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button')!.click();
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Refresh'))!
+      .click();
     http.expectOne('/api/incidents').flush([flood]);
+    http.expectOne('/api/incidents/priorities').flush([]);
     await fixture.whenStable();
 
     expect(text()).not.toContain('could not be loaded');
@@ -100,6 +106,7 @@ describe('IncidentList', () => {
 
   it('reloads when an incident changes somewhere else, and ignores other updates', async () => {
     http.expectOne('/api/incidents').flush([flood]);
+    http.expectOne('/api/incidents/priorities').flush([]);
     await fixture.whenStable();
 
     live.push({ kind: 'RESOURCE', id: 'r1' });
@@ -107,8 +114,42 @@ describe('IncidentList', () => {
 
     live.push({ kind: 'INCIDENT', id: 'a2' });
     http.expectOne('/api/incidents').flush([flood, fire]);
+    http.expectOne('/api/incidents/priorities').flush([]);
     await fixture.whenStable();
 
     expect(text()).toContain('Warehouse fire');
+  });
+
+  it('puts the most urgent incident first and can switch to newest first', async () => {
+    const urgent: Priority = { incidentId: 'a2', score: 82, level: 'URGENT', factors: [] };
+    const moderate: Priority = { incidentId: 'a1', score: 40, level: 'ELEVATED', factors: [] };
+    http.expectOne('/api/incidents').flush([flood, fire]);
+    http.expectOne('/api/incidents/priorities').flush([urgent, moderate]);
+    await fixture.whenStable();
+
+    const references = () =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('tr[mat-row] .reference')).map((cell) =>
+        cell.textContent!.trim(),
+      );
+
+    expect(references()).toEqual(['INC-2026-0002', 'INC-2026-0001']);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.priority-urgent')!.textContent!.trim()).toBe('82');
+
+    const newest = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('mat-button-toggle button'),
+    ).find((button) => button.textContent?.includes('Newest first'))!;
+    newest.click();
+    await fixture.whenStable();
+
+    expect(references()).toEqual(['INC-2026-0001', 'INC-2026-0002']);
+  });
+
+  it('still lists incidents when priorities cannot be loaded', async () => {
+    http.expectOne('/api/incidents').flush([flood]);
+    http.expectOne('/api/incidents/priorities').flush(null, { status: 500, statusText: 'Server Error' });
+    await fixture.whenStable();
+
+    expect(text()).toContain('INC-2026-0001');
+    expect(text()).not.toContain('could not be loaded');
   });
 });
