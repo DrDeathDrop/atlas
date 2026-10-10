@@ -1,6 +1,7 @@
 package io.github.drdeathdrop.atlas.resource.inventory;
 
 import io.github.drdeathdrop.atlas.resource.ResourceKind;
+import io.github.drdeathdrop.atlas.resource.ResourceStatus;
 import io.github.drdeathdrop.atlas.resource.ResourceSummary;
 import io.github.drdeathdrop.atlas.shared.geo.GeoPoints;
 import org.springframework.data.domain.Sort;
@@ -48,6 +49,20 @@ public class ResourceService {
                 .orElseThrow(() -> new ResourceNotFoundException(resourceId));
 
         resource.relocate(GeoPoints.of(request.latitude(), request.longitude()));
+
+        return toSummary(resource);
+    }
+
+    @Transactional
+    public ResourceSummary setInService(UUID resourceId, boolean inService) {
+        Resource resource = repository.findByIdForUpdate(resourceId)
+                .orElseThrow(() -> new ResourceNotFoundException(resourceId));
+
+        ResourceStatus status = resource.getStatus();
+        if (status == ResourceStatus.EN_ROUTE || status == ResourceStatus.ON_SCENE) {
+            throw new ResourceOnAssignmentException(resource.getCallSign());
+        }
+        resource.changeStatus(inService ? ResourceStatus.AVAILABLE : ResourceStatus.OUT_OF_SERVICE);
 
         return toSummary(resource);
     }

@@ -58,3 +58,36 @@ h1 {
   gap: 8px;
   justify-content: flex-end;
 }
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 16px;
+}
+
+.facts dt {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.facts dd {
+  margin: 2px 0 0;
+}
+
+.notice {
+  margin: 0 0 8px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.divider {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.actions.spread {
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}

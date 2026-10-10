@@ -1,0 +1,73 @@
+<a class="back" routerLink="/resources">← All resources</a>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+} @else if (notFound()) {
+  <h1>Resource not found</h1>
+  <p class="notice" role="alert">This resource does not exist or could not be loaded.</p>
+} @else if (resource(); as current) {
+  <h1>Edit {{ current.callSign }}</h1>
+
+  <form class="form" [formGroup]="form" (ngSubmit)="saveLocation()" novalidate>
+    <dl class="facts">
+      <div>
+        <dt>Type</dt>
+        <dd>{{ current.type | enumLabel }}</dd>
+      </div>
+      <div>
+        <dt>Kind</dt>
+        <dd>{{ current.kind | enumLabel }}</dd>
+      </div>
+      <div>
+        <dt>Status</dt>
+        <dd>{{ current.status | enumLabel }}</dd>
+      </div>
+    </dl>
+
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>Latitude</mat-label>
+        <input matInput type="number" step="any" formControlName="latitude" />
+        @if (form.controls.latitude.invalid) {
+          <mat-error>Enter a latitude between -90 and 90</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Longitude</mat-label>
+        <input matInput type="number" step="any" formControlName="longitude" />
+        @if (form.controls.longitude.invalid) {
+          <mat-error>Enter a longitude between -180 and 180</mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <p class="hint">Click the map to move the resource, or type the coordinates.</p>
+    <app-map-view class="picker" [pickable]="true" [picked]="location()" (pick)="placeAt($event)" />
+
+    <div class="actions">
+      <button mat-flat-button type="submit" [disabled]="saving() || form.pristine">Save location</button>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="actions spread">
+      @if (onAssignment()) {
+        <p class="notice">Assigned to an incident. Release it there before taking it out of service.</p>
+      } @else {
+        <p class="notice">
+          {{ inService() ? 'In service and can be dispatched.' : 'Out of service and cannot be dispatched.' }}
+        </p>
+      }
+      <button mat-stroked-button type="button" (click)="toggleService()" [disabled]="saving() || onAssignment()">
+        {{ inService() ? 'Take out of service' : 'Return to service' }}
+      </button>
+    </div>
+
+    @if (saved(); as message) {
+      <p class="notice" role="status">{{ message }}</p>
+    }
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+  </form>
+}

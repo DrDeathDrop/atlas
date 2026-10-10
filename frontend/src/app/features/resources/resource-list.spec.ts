@@ -60,4 +60,11 @@ describe('ResourceList', () => {
 
     expect(text()).toContain('could not be loaded');
   });
+
+  it('does not offer editing to someone who is not signed in as a dispatcher', async () => {
+    http.expectOne('/api/resources').flush([ambulance]);
+    await fixture.whenStable();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('a[href$="/edit"]')).toBeNull();
+  });
 });

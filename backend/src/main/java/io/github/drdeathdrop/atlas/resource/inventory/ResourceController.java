@@ -48,4 +48,11 @@ public class ResourceController {
                                           @Valid @RequestBody UpdateLocationRequest request) {
         return resourceService.updateLocation(resourceId, request);
     }
+
+    @PatchMapping("/{resourceId}/service")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DISPATCHER')")
+    public ResourceSummary setInService(@PathVariable UUID resourceId,
+                                        @Valid @RequestBody UpdateServiceStateRequest request) {
+        return resourceService.setInService(resourceId, request.inService());
+    }
 }

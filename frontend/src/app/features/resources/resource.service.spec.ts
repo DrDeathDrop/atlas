@@ -58,4 +58,26 @@ describe('ResourceService', () => {
 
     expect(http.expectOne('/api/assignments/asg-1/release').request.method).toBe('POST');
   });
+
+  it('reads one resource', () => {
+    service.get('res-1').subscribe();
+
+    expect(http.expectOne('/api/resources/res-1').request.method).toBe('GET');
+  });
+
+  it('moves a resource with a PATCH carrying the new coordinates', () => {
+    service.updateLocation('res-1', 42.2, 24.8).subscribe();
+
+    const request = http.expectOne('/api/resources/res-1/location').request;
+    expect(request.method).toBe('PATCH');
+    expect(request.body).toEqual({ latitude: 42.2, longitude: 24.8 });
+  });
+
+  it('takes a resource out of service with a PATCH', () => {
+    service.setInService('res-1', false).subscribe();
+
+    const request = http.expectOne('/api/resources/res-1/service').request;
+    expect(request.method).toBe('PATCH');
+    expect(request.body).toEqual({ inService: false });
+  });
 });

@@ -83,4 +83,36 @@ class ResourceServiceTest {
         assertThat(result.latitude()).isCloseTo(42.2, within(0.000001));
         assertThat(result.longitude()).isCloseTo(24.8, within(0.000001));
     }
+
+    @Test
+    void aResourceCanBeTakenOutOfServiceAndReturned() {
+        UUID resourceId = UUID.randomUUID();
+        Resource resource = new Resource("AMBULANCE-17", ResourceType.AMBULANCE, GeoPoints.of(42.1, 24.7), null);
+        when(repository.findByIdForUpdate(resourceId)).thenReturn(Optional.of(resource));
+
+        assertThat(service.setInService(resourceId, false).status()).isEqualTo(ResourceStatus.OUT_OF_SERVICE);
+        assertThat(service.setInService(resourceId, true).status()).isEqualTo(ResourceStatus.AVAILABLE);
+    }
+
+    @Test
+    void aResourceOnAnIncidentCannotBeTakenOutOfService() {
+        UUID resourceId = UUID.randomUUID();
+        Resource resource = new Resource("AMBULANCE-17", ResourceType.AMBULANCE, GeoPoints.of(42.1, 24.7), null);
+        resource.changeStatus(ResourceStatus.EN_ROUTE);
+        when(repository.findByIdForUpdate(resourceId)).thenReturn(Optional.of(resource));
+
+        assertThatThrownBy(() -> service.setInService(resourceId, false))
+                .isInstanceOf(ResourceOnAssignmentException.class);
+
+        assertThat(resource.getStatus()).isEqualTo(ResourceStatus.EN_ROUTE);
+    }
+
+    @Test
+    void changingTheServiceStateFailsForAnUnknownResource() {
+        UUID resourceId = UUID.randomUUID();
+        when(repository.findByIdForUpdate(resourceId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.setInService(resourceId, true))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
 }

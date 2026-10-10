@@ -20,7 +20,11 @@ export class ResourceList implements OnInit {
 
   protected readonly mayAdd = computed(() => this.auth.hasRole('ADMIN', 'DISPATCHER'));
 
-  protected readonly columns = ['callSign', 'type', 'kind', 'status', 'location'];
+  protected readonly columns = computed(() =>
+    this.mayAdd()
+      ? ['callSign', 'type', 'kind', 'status', 'location', 'actions']
+      : ['callSign', 'type', 'kind', 'status', 'location'],
+  );
   protected readonly resources = signal<Resource[]>([]);
   protected readonly loading = signal(true);
   protected readonly failed = signal(false);

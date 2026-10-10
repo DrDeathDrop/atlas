@@ -64,6 +64,11 @@ public class Facility {
         this.occupancy = 0;
     }
 
+    public void relocate(Point newLocation, String newAddress) {
+        this.location = newLocation;
+        this.address = newAddress;
+    }
+
     public void changeOccupancy(int newOccupancy) {
         this.occupancy = newOccupancy;
     }

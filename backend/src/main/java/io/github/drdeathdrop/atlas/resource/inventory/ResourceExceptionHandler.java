@@ -21,4 +21,9 @@ public class ResourceExceptionHandler {
     public ProblemDetail handleInvalidTeam(InvalidTeamException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
+
+    @ExceptionHandler(ResourceOnAssignmentException.class)
+    public ProblemDetail handleOnAssignment(ResourceOnAssignmentException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
 }

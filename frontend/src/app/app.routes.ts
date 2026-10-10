@@ -45,6 +45,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/resources/resource-form').then((module) => module.ResourceForm),
       },
+      {
+        path: 'resources/:id/edit',
+        canActivate: [roleGuard('ADMIN', 'DISPATCHER')],
+        loadComponent: () =>
+          import('./features/resources/resource-edit').then((module) => module.ResourceEdit),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
