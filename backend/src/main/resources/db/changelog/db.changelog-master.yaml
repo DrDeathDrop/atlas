@@ -7,3 +7,7 @@ databaseChangeLog:
       file: db/changelog/changes/0003-create-refresh-tokens.sql
   - include:
       file: db/changelog/changes/0004-create-incidents.sql
+  - include:
+      file: db/changelog/changes/0005-create-audit-log.sql
+  - include:
+      file: db/changelog/changes/0006-create-application-user.sql

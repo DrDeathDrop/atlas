@@ -32,7 +32,7 @@ public class IncidentService {
     }
 
     @Transactional
-    public IncidentSummary report(ReportIncidentRequest request, UUID reportedBy) {
+    public IncidentSummary report(ReportIncidentRequest request, UUID reportedBy, Role role) {
         long number = repository.nextReferenceNumber();
         String reference = String.format("INC-%d-%04d", Year.now().getValue(), number);
 
@@ -50,7 +50,7 @@ public class IncidentService {
 
         Incident saved = repository.saveAndFlush(incident);
 
-        events.publishEvent(new IncidentReported(saved.getId(), saved.getReference(), saved.getReportedBy()));
+        events.publishEvent(new IncidentReported(saved.getId(), saved.getReference(), saved.getReportedBy(), role));
 
         return toSummary(saved);
     }
@@ -67,7 +67,7 @@ public class IncidentService {
         incident.moveTo(newStatus);
 
         events.publishEvent(new IncidentStatusChanged(
-                incident.getId(), incident.getReference(), previous, newStatus, changedBy));
+                incident.getId(), incident.getReference(), previous, newStatus, changedBy, role));
 
         return toSummary(incident);
     }

@@ -33,7 +33,7 @@ public class IncidentController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DISPATCHER')")
     public IncidentSummary report(@Valid @RequestBody ReportIncidentRequest request,
                                   @AuthenticationPrincipal Jwt jwt) {
-        return incidentService.report(request, userId(jwt));
+        return incidentService.report(request, userId(jwt), role(jwt));
     }
 
     @GetMapping

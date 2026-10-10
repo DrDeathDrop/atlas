@@ -55,7 +55,7 @@ class IncidentServiceTest {
         when(repository.nextReferenceNumber()).thenReturn(42L);
         when(repository.saveAndFlush(any(Incident.class))).thenAnswer(call -> call.getArgument(0));
 
-        IncidentSummary result = service.report(floodRequest(), reporter);
+        IncidentSummary result = service.report(floodRequest(), reporter, Role.DISPATCHER);
 
         ArgumentCaptor<Incident> captor = ArgumentCaptor.forClass(Incident.class);
         verify(repository).saveAndFlush(captor.capture());
@@ -83,7 +83,7 @@ class IncidentServiceTest {
         when(repository.nextReferenceNumber()).thenReturn(7L);
         when(repository.saveAndFlush(any(Incident.class))).thenAnswer(call -> call.getArgument(0));
 
-        IncidentSummary result = service.report(floodRequest(), reporter);
+        IncidentSummary result = service.report(floodRequest(), reporter, Role.DISPATCHER);
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(events).publishEvent(captor.capture());
@@ -92,6 +92,7 @@ class IncidentServiceTest {
         IncidentReported event = (IncidentReported) captor.getValue();
         assertThat(event.reference()).isEqualTo(result.reference());
         assertThat(event.reportedBy()).isEqualTo(reporter);
+        assertThat(event.reporterRole()).isEqualTo(Role.DISPATCHER);
     }
 
     @Test
@@ -114,6 +115,7 @@ class IncidentServiceTest {
         assertThat(event.from()).isEqualTo(IncidentStatus.REPORTED);
         assertThat(event.to()).isEqualTo(IncidentStatus.VERIFIED);
         assertThat(event.changedBy()).isEqualTo(dispatcher);
+        assertThat(event.changedByRole()).isEqualTo(Role.DISPATCHER);
         assertThat(event.reference()).isEqualTo(incident.getReference());
     }
 

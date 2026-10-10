@@ -89,10 +89,43 @@ display, such as `INC-2026-0184`.
 
 ### Audit log
 
-The audit table is append-only, enforced by the database: the application
-connects as a user that may `INSERT` and `SELECT` on it but not `UPDATE` or
-`DELETE`. This needs two database users, an owner that runs migrations and a
-restricted one used at runtime.
+The audit table is append-only, enforced by the database. There are two
+database users: `atlas` owns the schema and is used only by Liquibase, and
+`atlas_app` is what the application runs as. `atlas_app` may `INSERT` and
+`SELECT` on `audit_log` but not `UPDATE`, `DELETE` or `TRUNCATE`; an
+integration test confirms PostgreSQL refuses both.
+
+Audit records are written by a listener in the `audit` module that reacts to
+incident events. The incident module does not know the audit module exists.
+Each record stores who acted, the role they held at the time, the action, the
+entity, and the previous and new state.
+
+## Incident lifecycle
+
+An incident moves through seven states. Only the moves in this table are
+allowed; everything else is refused.
+
+| From | Allowed next states |
+|---|---|
+| `REPORTED` | `VERIFIED`, `REJECTED` |
+| `VERIFIED` | `ACTIVE` |
+| `ACTIVE` | `CONTAINED` |
+| `CONTAINED` | `RESOLVED`, `ACTIVE` |
+| `RESOLVED` | `ARCHIVED`, `ACTIVE` |
+| `REJECTED` | `ARCHIVED` |
+| `ARCHIVED` | none |
+
+`REJECTED` exists for false reports, so they are not counted as resolved.
+The two backwards moves cover an incident that flares up again or was closed
+too early. `ARCHIVED` is final.
+
+Roles limit who may make a move. Administrators and dispatchers may make any
+allowed move. A field operator may only mark an active incident as contained.
+Analysts and viewers may not change status.
+
+The rules live in one class, `IncidentLifecycle`, which has no dependency on
+Spring or the database. A move is validated before anything is modified, so a
+refused move changes nothing and produces no event.
 
 ## Authentication
 
@@ -140,7 +173,9 @@ later, and cannot be refreshed.
 ## Current state
 
 Implemented: the `user` module (accounts, roles, login, refresh tokens,
-sessions), Liquibase migrations, Docker setup, CI.
+sessions), the `incident` module (reporting, lifecycle, status changes), the
+`audit` module (append-only log of incident events), Liquibase migrations,
+Docker setup, CI.
 
-Not yet implemented: every other module, the two database users, the
+Not yet implemented: `resource`, `notification` and `analytics`, and the
 frontend beyond its skeleton.

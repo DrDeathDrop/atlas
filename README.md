@@ -66,7 +66,9 @@ All settings have defaults that work locally. Outside local development, set:
 |---|---|
 | `ATLAS_JWT_SECRET` | Signing key for access tokens, at least 32 characters |
 | `ATLAS_ADMIN_EMAIL`, `ATLAS_ADMIN_PASSWORD` | The first administrator, created when none exists |
-| `ATLAS_DB_URL`, `ATLAS_DB_USER`, `ATLAS_DB_PASSWORD` | Database connection |
+| `ATLAS_DB_URL` | Database address |
+| `ATLAS_DB_USER`, `ATLAS_DB_PASSWORD` | The database owner, used only to run migrations |
+| `ATLAS_DB_APP_PASSWORD` | Password of `atlas_app`, the restricted user the application runs as |
 
 If `ATLAS_ADMIN_PASSWORD` is not set, a random password is generated and
 written to the log once, on the first start.
@@ -96,7 +98,11 @@ Done:
 - Docker setup and CI pipeline
 - Authentication: role-based access, JWT access tokens, rotating refresh
   tokens in an HttpOnly cookie, session management
+- Incidents: reporting with a PostGIS location, a lifecycle state machine
+  with role rules
+- Audit log: written in the same transaction as each change, append-only at
+  the database level
 
-Planned, in order: incident lifecycle, resource
+Planned, in order: resource
 management, operations dashboard, map, real-time updates, event system,
 priority scoring, disaster simulator, analytics, observability.

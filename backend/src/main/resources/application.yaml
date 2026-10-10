@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: ${ATLAS_DB_URL:jdbc:postgresql://localhost:5433/atlas}
-    username: ${ATLAS_DB_USER:atlas}
-    password: ${ATLAS_DB_PASSWORD:atlas}
+    username: ${ATLAS_DB_APP_USER:atlas_app}
+    password: ${ATLAS_DB_APP_PASSWORD:atlas_app}
 
   jpa:
     open-in-view: false
@@ -14,6 +14,10 @@ spring:
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+    user: ${ATLAS_DB_USER:atlas}
+    password: ${ATLAS_DB_PASSWORD:atlas}
+    parameters:
+      appUserPassword: ${ATLAS_DB_APP_PASSWORD:atlas_app}
 
 server:
   port: 8080
