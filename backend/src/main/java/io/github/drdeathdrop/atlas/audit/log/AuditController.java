@@ -23,7 +23,7 @@ public class AuditController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALYST', 'DISPATCHER')")
     @Transactional(readOnly = true)
     public List<AuditEntryView> incidentHistory(@PathVariable UUID incidentId) {
-        return repository.findByEntityTypeAndEntityIdOrderByOccurredAtAsc(AuditEntry.INCIDENT, incidentId).stream()
+        return repository.findIncidentHistory(incidentId).stream()
                 .map(AuditEntryView::of)
                 .toList();
     }

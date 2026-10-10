@@ -102,7 +102,8 @@ Done:
   with role rules
 - Audit log: written in the same transaction as each change, append-only at
   the database level
+- Resources: teams and vehicles, a PostGIS search for what is available near
+  an incident, and assignment that is safe under concurrent requests
 
-Planned, in order: resource
-management, operations dashboard, map, real-time updates, event system,
+Planned, in order: operations dashboard, map, real-time updates, event system,
 priority scoring, disaster simulator, analytics, observability.

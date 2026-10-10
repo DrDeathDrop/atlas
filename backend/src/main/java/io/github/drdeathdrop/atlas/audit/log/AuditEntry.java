@@ -21,6 +21,7 @@ import java.util.UUID;
 @Table(name = "audit_log")
 public class AuditEntry {
     public static final String INCIDENT = "INCIDENT";
+    public static final String RESOURCE = "RESOURCE";
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -55,11 +56,19 @@ public class AuditEntry {
     @Column(updatable = false, length = 64)
     private String newState;
 
+    @Column(updatable = false)
+    private UUID relatedEntityId;
+
     protected AuditEntry() {
     }
 
     public AuditEntry(UUID actorId, Role actorRole, AuditAction action, String entityType, UUID entityId,
                       String entityReference, String previousState, String newState) {
+        this(actorId, actorRole, action, entityType, entityId, entityReference, previousState, newState, null);
+    }
+
+    public AuditEntry(UUID actorId, Role actorRole, AuditAction action, String entityType, UUID entityId,
+                      String entityReference, String previousState, String newState, UUID relatedEntityId) {
         this.occurredAt = Instant.now();
         this.actorId = actorId;
         this.actorRole = actorRole;
@@ -69,5 +78,6 @@ public class AuditEntry {
         this.entityReference = entityReference;
         this.previousState = previousState;
         this.newState = newState;
+        this.relatedEntityId = relatedEntityId;
     }
 }

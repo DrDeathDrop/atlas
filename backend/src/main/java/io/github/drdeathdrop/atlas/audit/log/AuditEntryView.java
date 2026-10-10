@@ -15,7 +15,8 @@ public record AuditEntryView(
         UUID entityId,
         String entityReference,
         String previousState,
-        String newState
+        String newState,
+        UUID relatedEntityId
 ) {
     static AuditEntryView of(AuditEntry entry) {
         return new AuditEntryView(
@@ -28,6 +29,7 @@ public record AuditEntryView(
                 entry.getEntityId(),
                 entry.getEntityReference(),
                 entry.getPreviousState(),
-                entry.getNewState());
+                entry.getNewState(),
+                entry.getRelatedEntityId());
     }
 }

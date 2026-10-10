@@ -22,14 +22,12 @@ io.github.drdeathdrop.atlas
 ```
 
 A module is a group of things that change together and share rules. Inside a
-module, each entity gets its own sub-package:
+module, code is split into sub-packages by responsibility:
 
 ```
 resource/
-├── vehicle/         Vehicle, VehicleService, VehicleDTO, VehicleRepository
-├── team/
-├── equipment/
-└── allocation/      "find and assign what is available"
+├── inventory/       the resources themselves: teams and vehicles
+└── allocation/      finding what is available and assigning it
 ```
 
 Inside a module the flow is controller -> service -> repository.
@@ -95,10 +93,11 @@ database users: `atlas` owns the schema and is used only by Liquibase, and
 `SELECT` on `audit_log` but not `UPDATE`, `DELETE` or `TRUNCATE`; an
 integration test confirms PostgreSQL refuses both.
 
-Audit records are written by a listener in the `audit` module that reacts to
-incident events. The incident module does not know the audit module exists.
+Audit records are written by listeners in the `audit` module that react to
+incident and resource events. Neither module knows the audit module exists.
 Each record stores who acted, the role they held at the time, the action, the
-entity, and the previous and new state.
+entity, the previous and new state, and for resource actions the incident
+they relate to.
 
 ## Incident lifecycle
 
@@ -126,6 +125,38 @@ Analysts and viewers may not change status.
 The rules live in one class, `IncidentLifecycle`, which has no dependency on
 Spring or the database. A move is validated before anything is modified, so a
 refused move changes nothing and produces no event.
+
+## Resources and dispatch
+
+Teams and vehicles are stored in one `resources` table, distinguished by
+type. They share every field and rule: a call sign, a status, a location, and
+they are assigned and released the same way.
+
+**Finding resources.** "Available resources within 15 km of this incident" is
+a PostGIS query. `ST_DWithin` filters by radius using a spatial index, and
+`ST_Distance` orders the results nearest first. Both work on the `geography`
+type, so distances are real metres.
+
+**Assigning.** A resource can be assigned only when it is `AVAILABLE`, and
+never to two incidents at once. Two dispatchers acting at the same moment
+would otherwise both pass the availability check. Two things prevent that:
+
+- The assignment reads the resource with a row lock (`SELECT ... FOR UPDATE`).
+  A second request for the same resource waits until the first commits, then
+  sees that the resource is no longer available.
+- A partial unique index allows at most one unreleased assignment per
+  resource, so the database refuses a double assignment even if the code were
+  wrong.
+
+An integration test runs two assignments of one resource from two threads and
+requires exactly one to succeed.
+
+**Rules that span modules.** Only `VERIFIED` and `ACTIVE` incidents can
+receive resources. The first assignment moves a `VERIFIED` incident to
+`ACTIVE`. Resolving an incident releases its resources. These live in the
+incident module, which calls the resource module through the
+`ResourceAllocation` interface. The resource module knows nothing about
+incidents beyond an id.
 
 ## Authentication
 
@@ -173,9 +204,10 @@ later, and cannot be refreshed.
 ## Current state
 
 Implemented: the `user` module (accounts, roles, login, refresh tokens,
-sessions), the `incident` module (reporting, lifecycle, status changes), the
-`audit` module (append-only log of incident events), Liquibase migrations,
-Docker setup, CI.
+sessions), the `incident` module (reporting, lifecycle, status changes,
+dispatch), the `resource` module (teams and vehicles, nearby search,
+assignment), the `audit` module (append-only log of incident and resource
+events), Liquibase migrations, Docker setup, CI.
 
-Not yet implemented: `resource`, `notification` and `analytics`, and the
-frontend beyond its skeleton.
+Not yet implemented: `notification` and `analytics`, places such as shelters
+and hospitals, and the frontend beyond its skeleton.

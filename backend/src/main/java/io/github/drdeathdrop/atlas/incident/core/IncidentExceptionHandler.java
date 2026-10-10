@@ -1,5 +1,6 @@
 package io.github.drdeathdrop.atlas.incident.core;
 
+import io.github.drdeathdrop.atlas.incident.dispatch.IncidentNotDispatchableException;
 import io.github.drdeathdrop.atlas.incident.lifecycle.InvalidTransitionException;
 import io.github.drdeathdrop.atlas.incident.lifecycle.TransitionNotPermittedException;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,11 @@ public class IncidentExceptionHandler {
 
     @ExceptionHandler(InvalidTransitionException.class)
     public ProblemDetail handleInvalidTransition(InvalidTransitionException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(IncidentNotDispatchableException.class)
+    public ProblemDetail handleNotDispatchable(IncidentNotDispatchableException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
     }
 
