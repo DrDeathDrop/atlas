@@ -1,7 +1,9 @@
 package io.github.drdeathdrop.atlas.facility.registry;
 
+import io.github.drdeathdrop.atlas.facility.FacilityChanged;
 import io.github.drdeathdrop.atlas.facility.FacilitySummary;
 import io.github.drdeathdrop.atlas.shared.geo.GeoPoints;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,9 +14,11 @@ import java.util.UUID;
 @Service
 public class FacilityService {
     private final FacilityRepository repository;
+    private final ApplicationEventPublisher events;
 
-    public FacilityService(FacilityRepository repository) {
+    public FacilityService(FacilityRepository repository, ApplicationEventPublisher events) {
         this.repository = repository;
+        this.events = events;
     }
 
     @Transactional
@@ -33,7 +37,10 @@ public class FacilityService {
                 GeoPoints.of(request.latitude(), request.longitude()),
                 request.capacity());
 
-        return toSummary(repository.saveAndFlush(facility));
+        Facility saved = repository.saveAndFlush(facility);
+        events.publishEvent(new FacilityChanged(saved.getId()));
+
+        return toSummary(saved);
     }
 
     @Transactional
@@ -45,6 +52,7 @@ public class FacilityService {
             throw new OccupancyOverCapacityException(request.occupancy(), facility.getCapacity());
         }
         facility.changeOccupancy(request.occupancy());
+        events.publishEvent(new FacilityChanged(facilityId));
 
         return toSummary(facility);
     }

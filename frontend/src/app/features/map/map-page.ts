@@ -1,10 +1,12 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { LiveUpdates } from '../../core/live/live-updates';
 import { MapView } from '../../shared/map/map-view';
 import { MapDraft, MapMarker, MapPoint, MapShape } from '../../shared/map/map.models';
 import { Incident, IncidentStatus } from '../incidents/incident.models';
@@ -38,6 +40,7 @@ export class MapPage implements OnInit {
   private readonly features = inject(MapFeatureService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly live = inject(LiveUpdates);
 
   protected readonly incidents = signal<Incident[]>([]);
   protected readonly resources = signal<Resource[]>([]);
@@ -131,12 +134,19 @@ export class MapPage implements OnInit {
     return [...zones, ...closures];
   });
 
+  constructor() {
+    this.live
+      .when(() => true)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.load(true));
+  }
+
   ngOnInit(): void {
     this.load();
   }
 
-  protected load(): void {
-    this.loading.set(true);
+  protected load(quietly = false): void {
+    this.loading.set(!quietly);
     this.failed.set(false);
 
     forkJoin({

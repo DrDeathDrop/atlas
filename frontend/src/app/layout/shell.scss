@@ -26,6 +26,29 @@
   flex: 1;
 }
 
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--mat-sys-outline);
+}
+
+.live.on {
+  color: #14522d;
+}
+
+.live.on .dot {
+  background-color: #1b6e3c;
+}
+
 .user {
   display: flex;
   flex-direction: column;

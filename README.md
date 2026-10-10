@@ -112,5 +112,8 @@ Done:
   and affected zones as polygons and closed roads as lines, drawn on the map
   and stored as PostGIS geometry
 
-Planned, in order: real-time updates, event system,
+- Live updates: changes are announced over WebSocket (STOMP) after the
+  transaction commits, and open pages reload themselves
+
+Planned, in order: notifications, event system,
 priority scoring, disaster simulator, analytics, observability.

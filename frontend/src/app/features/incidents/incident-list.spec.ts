@@ -2,6 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { LiveUpdates } from '../../core/live/live-updates';
+import { LiveUpdatesStub } from '../../core/live/live-updates.testing';
 import { IncidentList } from './incident-list';
 import { Incident } from './incident.models';
 
@@ -35,11 +37,18 @@ const fire: Incident = {
 describe('IncidentList', () => {
   let fixture: ComponentFixture<IncidentList>;
   let http: HttpTestingController;
+  let live: LiveUpdatesStub;
 
   beforeEach(async () => {
+    live = new LiveUpdatesStub();
     await TestBed.configureTestingModule({
       imports: [IncidentList],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: LiveUpdates, useValue: live },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(IncidentList);
@@ -87,5 +96,19 @@ describe('IncidentList', () => {
 
     expect(text()).not.toContain('could not be loaded');
     expect(text()).toContain('INC-2026-0001');
+  });
+
+  it('reloads when an incident changes somewhere else, and ignores other updates', async () => {
+    http.expectOne('/api/incidents').flush([flood]);
+    await fixture.whenStable();
+
+    live.push({ kind: 'RESOURCE', id: 'r1' });
+    http.expectNone('/api/incidents');
+
+    live.push({ kind: 'INCIDENT', id: 'a2' });
+    http.expectOne('/api/incidents').flush([flood, fire]);
+    await fixture.whenStable();
+
+    expect(text()).toContain('Warehouse fire');
   });
 });

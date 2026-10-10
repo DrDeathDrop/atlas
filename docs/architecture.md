@@ -18,7 +18,7 @@ io.github.drdeathdrop.atlas
 ├── zone/            evacuation and affected zones, road closures
 ├── user/            accounts, roles, authentication
 ├── audit/           append-only audit log
-├── notification/    in-app, email and WebSocket notifications
+├── notification/    live updates over WebSocket; in-app and email notifications
 ├── analytics/       statistics and reports
 └── shared/          small: base types, error model, security helpers
 ```
@@ -185,6 +185,40 @@ A facility has a capacity and an occupancy. The service refuses an occupancy
 above the capacity, and a check constraint in the database enforces the same
 rule.
 
+## Live updates
+
+Open pages update themselves when something changes elsewhere. The browser
+keeps one WebSocket connection, speaking STOMP, and subscribes to a single
+topic.
+
+**What is sent.** Only a notice that something changed: a kind (`INCIDENT`,
+`RESOURCE`, `FACILITY`, `ZONE`) and an id. The page then reloads what it shows
+through the normal REST API. The data is never pushed over the socket, so
+there is one place that decides what a user may see, and a missed message
+costs nothing more than a stale screen until the next one.
+
+**When it is sent.** Services publish events as before. The broadcaster
+listens with `@TransactionalEventListener(AFTER_COMMIT)`: a notice goes out
+only once the change is really in the database. Sent earlier, a client could
+reload and still read the old state, or be told about a change that was then
+rolled back. A failed broadcast is logged and never fails the request. This
+is the opposite choice from the audit log, which runs inside the transaction
+because an unaudited change must not exist.
+
+**Authentication.** A browser cannot add an `Authorization` header to a
+WebSocket handshake, so the handshake itself is open and the access token is
+sent in the STOMP `CONNECT` frame. An interceptor validates it with the same
+decoder as the REST API and refuses the connection otherwise. Clients may
+subscribe to the one topic and may not send anything.
+
+**Reconnecting.** The client reconnects on its own. After a reconnect it
+tells every page to reload, because it cannot know what it missed. If the
+server refused the connection, the client refreshes the access token before
+the next attempt. Bursts of notices are collapsed into one reload.
+
+The broker is Spring's in-memory one, which is enough for a single
+application instance. Running several instances would need a shared broker.
+
 ## Authentication
 
 Accounts are created by administrators; there is no public sign-up. Each user
@@ -223,6 +257,7 @@ The Angular application is organised the same way as the backend, by feature:
 ```
 frontend/src/app
 ├── core/auth/        login state, token refresh, route guards
+├── core/live/        the WebSocket connection and the stream of updates
 ├── layout/           the shell around every page
 ├── features/
 │   ├── auth/         login page
@@ -260,7 +295,8 @@ map to display.
 | Persistence | Spring Data JPA, Hibernate |
 | Database | PostgreSQL 17 + PostGIS |
 | Migrations | Liquibase |
-| Frontend | Angular, Angular Material, Leaflet |
+| Live updates | WebSocket with STOMP, Spring's in-memory broker |
+| Frontend | Angular, Angular Material, Leaflet, stompjs |
 | Local services | Docker Compose |
 
 ## Current state
@@ -270,12 +306,13 @@ sessions), the `incident` module (reporting, lifecycle, status changes,
 dispatch), the `resource` module (teams and vehicles, nearby search,
 assignment), the `facility` module (hospitals and shelters), the `zone`
 module (evacuation and affected zones, road closures), the `audit` module
-(append-only log of incident and resource events), Liquibase migrations,
-Docker setup, CI.
+(append-only log of incident and resource events), live updates in the
+`notification` module, Liquibase migrations, Docker setup, CI.
 
 The frontend covers login, the incident list and detail pages, dispatching,
 the resource list, forms to report an incident and add a resource, and a map
 of incidents, resources, facilities, zones and closed roads, on which zones,
-closures and facilities can be drawn.
+closures and facilities can be drawn. Lists, the incident page and the map
+reload themselves when something changes.
 
-Not yet implemented: `notification` and `analytics`, and live updates.
+Not yet implemented: stored notifications for users, and `analytics`.

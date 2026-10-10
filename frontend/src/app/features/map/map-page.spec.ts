@@ -5,6 +5,8 @@ import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 import { Role } from '../../core/auth/auth.models';
 import { AuthService } from '../../core/auth/auth.service';
+import { LiveUpdates } from '../../core/live/live-updates';
+import { LiveUpdatesStub } from '../../core/live/live-updates.testing';
 import { MapView } from '../../shared/map/map-view';
 import { MapViewStub } from '../../shared/map/map-view.testing';
 import { Incident } from '../incidents/incident.models';
@@ -80,11 +82,18 @@ const underpass: RoadClosure = {
 describe('MapPage', () => {
   let fixture: ComponentFixture<MapPage>;
   let http: HttpTestingController;
+  let live: LiveUpdatesStub;
 
   async function setUp(role: Role = 'DISPATCHER'): Promise<void> {
+    live = new LiveUpdatesStub();
     await TestBed.configureTestingModule({
       imports: [MapPage],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: LiveUpdates, useValue: live },
+      ],
     })
       .overrideComponent(MapPage, { remove: { imports: [MapView] }, add: { imports: [MapViewStub] } })
       .compileComponents();
@@ -310,5 +319,15 @@ describe('MapPage', () => {
     await fixture.whenStable();
 
     expect(element().textContent).toContain('could not be loaded');
+  });
+
+  it('reloads when anything on the map changes somewhere else', async () => {
+    await setUp();
+    await loadData();
+
+    live.push({ kind: 'ZONE', id: 'z2' });
+    await loadData();
+
+    expect(map().shapes().length).toBe(2);
   });
 });

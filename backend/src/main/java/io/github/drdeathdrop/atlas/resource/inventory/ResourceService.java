@@ -1,9 +1,11 @@
 package io.github.drdeathdrop.atlas.resource.inventory;
 
+import io.github.drdeathdrop.atlas.resource.ResourceChanged;
 import io.github.drdeathdrop.atlas.resource.ResourceKind;
 import io.github.drdeathdrop.atlas.resource.ResourceStatus;
 import io.github.drdeathdrop.atlas.resource.ResourceSummary;
 import io.github.drdeathdrop.atlas.shared.geo.GeoPoints;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,9 +16,11 @@ import java.util.UUID;
 @Service
 public class ResourceService {
     private final ResourceRepository repository;
+    private final ApplicationEventPublisher events;
 
-    public ResourceService(ResourceRepository repository) {
+    public ResourceService(ResourceRepository repository, ApplicationEventPublisher events) {
         this.repository = repository;
+        this.events = events;
     }
 
     @Transactional
@@ -40,7 +44,10 @@ public class ResourceService {
                 GeoPoints.of(request.latitude(), request.longitude()),
                 request.teamId());
 
-        return toSummary(repository.saveAndFlush(resource));
+        Resource saved = repository.saveAndFlush(resource);
+        events.publishEvent(new ResourceChanged(saved.getId()));
+
+        return toSummary(saved);
     }
 
     @Transactional
@@ -49,6 +56,7 @@ public class ResourceService {
                 .orElseThrow(() -> new ResourceNotFoundException(resourceId));
 
         resource.relocate(GeoPoints.of(request.latitude(), request.longitude()));
+        events.publishEvent(new ResourceChanged(resourceId));
 
         return toSummary(resource);
     }
@@ -63,6 +71,7 @@ public class ResourceService {
             throw new ResourceOnAssignmentException(resource.getCallSign());
         }
         resource.changeStatus(inService ? ResourceStatus.AVAILABLE : ResourceStatus.OUT_OF_SERVICE);
+        events.publishEvent(new ResourceChanged(resourceId));
 
         return toSummary(resource);
     }

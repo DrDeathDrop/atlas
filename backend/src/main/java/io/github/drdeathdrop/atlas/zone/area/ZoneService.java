@@ -1,7 +1,9 @@
 package io.github.drdeathdrop.atlas.zone.area;
 
 import io.github.drdeathdrop.atlas.shared.geo.GeoShapes;
+import io.github.drdeathdrop.atlas.zone.ZoneChanged;
 import io.github.drdeathdrop.atlas.zone.ZoneSummary;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +14,11 @@ import java.util.UUID;
 @Service
 public class ZoneService {
     private final ZoneRepository repository;
+    private final ApplicationEventPublisher events;
 
-    public ZoneService(ZoneRepository repository) {
+    public ZoneService(ZoneRepository repository, ApplicationEventPublisher events) {
         this.repository = repository;
+        this.events = events;
     }
 
     @Transactional
@@ -25,7 +29,10 @@ public class ZoneService {
                 GeoShapes.polygon(request.boundary()),
                 createdBy);
 
-        return toSummary(repository.saveAndFlush(zone));
+        Zone saved = repository.saveAndFlush(zone);
+        events.publishEvent(new ZoneChanged(saved.getId()));
+
+        return toSummary(saved);
     }
 
     @Transactional
@@ -37,6 +44,7 @@ public class ZoneService {
             throw new ZoneAlreadyLiftedException(zoneId);
         }
         zone.lift(liftedBy, Instant.now());
+        events.publishEvent(new ZoneChanged(zoneId));
 
         return toSummary(zone);
     }

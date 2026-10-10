@@ -4,6 +4,8 @@ import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { LiveUpdates } from '../../core/live/live-updates';
+import { LiveUpdatesStub } from '../../core/live/live-updates.testing';
 import { MapView } from '../../shared/map/map-view';
 import { MapViewStub } from '../../shared/map/map-view.testing';
 import { IncidentDetail } from './incident-detail';
@@ -49,11 +51,18 @@ class IncidentDispatchStub {
 describe('IncidentDetail', () => {
   let fixture: ComponentFixture<IncidentDetail>;
   let http: HttpTestingController;
+  let live: LiveUpdatesStub;
 
   beforeEach(async () => {
+    live = new LiveUpdatesStub();
     await TestBed.configureTestingModule({
       imports: [IncidentDetail],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: LiveUpdates, useValue: live },
+      ],
     })
       .overrideComponent(IncidentDetail, {
         remove: { imports: [IncidentDispatch, MapView] },
@@ -177,5 +186,17 @@ describe('IncidentDetail', () => {
     await fixture.whenStable();
 
     expect(element().textContent).toContain('This incident does not exist');
+  });
+
+  it('reloads when this incident changes somewhere else, and ignores other incidents', async () => {
+    await answer(incident, ['VERIFIED', 'REJECTED']);
+
+    live.push({ kind: 'INCIDENT', id: 'another' });
+    http.expectNone('/api/incidents/a1');
+
+    live.push({ kind: 'INCIDENT', id: 'a1' });
+    await answer({ ...incident, status: 'VERIFIED' }, ['ACTIVE']);
+
+    expect(buttons()).toEqual(['Activate']);
   });
 });

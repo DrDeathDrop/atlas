@@ -9,6 +9,10 @@
 
   <span class="spacer"></span>
 
+  <span class="live" [class.on]="isLive()" role="status">
+    <span class="dot" aria-hidden="true"></span>{{ isLive() ? 'Live' : 'Offline' }}
+  </span>
+
   @if (user(); as current) {
     <span class="user">
       <span class="name">{{ current.fullName }}</span>

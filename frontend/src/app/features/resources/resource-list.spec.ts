@@ -2,6 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { LiveUpdates } from '../../core/live/live-updates';
+import { LiveUpdatesStub } from '../../core/live/live-updates.testing';
 import { ResourceList } from './resource-list';
 import { Resource } from './resource.models';
 
@@ -19,11 +21,18 @@ const ambulance: Resource = {
 describe('ResourceList', () => {
   let fixture: ComponentFixture<ResourceList>;
   let http: HttpTestingController;
+  let live: LiveUpdatesStub;
 
   beforeEach(async () => {
+    live = new LiveUpdatesStub();
     await TestBed.configureTestingModule({
       imports: [ResourceList],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: LiveUpdates, useValue: live },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ResourceList);
@@ -66,5 +75,16 @@ describe('ResourceList', () => {
     await fixture.whenStable();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('a[href$="/edit"]')).toBeNull();
+  });
+
+  it('reloads when a resource changes somewhere else', async () => {
+    http.expectOne('/api/resources').flush([ambulance]);
+    await fixture.whenStable();
+
+    live.push({ kind: 'RESOURCE', id: 'r1' });
+    http.expectOne('/api/resources').flush([{ ...ambulance, status: 'ON_SCENE' }]);
+    await fixture.whenStable();
+
+    expect(text()).toContain('On scene');
   });
 });

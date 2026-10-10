@@ -1,10 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { LiveUpdates } from '../../core/live/live-updates';
 import { EnumLabelPipe } from '../../shared/enum-label.pipe';
 import { MapView } from '../../shared/map/map-view';
 import { MapMarker } from '../../shared/map/map.models';
@@ -31,6 +33,7 @@ import { IncidentService } from './incident.service';
 })
 export class IncidentDetail implements OnInit {
   private readonly incidentService = inject(IncidentService);
+  private readonly live = inject(LiveUpdates);
 
   readonly id = input.required<string>();
 
@@ -57,6 +60,13 @@ export class IncidentDetail implements OnInit {
           },
         ];
   });
+
+  constructor() {
+    this.live
+      .when((update) => update.kind === 'RESOURCE' || (update.kind === 'INCIDENT' && update.id === this.id()))
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.load(true));
+  }
 
   ngOnInit(): void {
     this.load();
@@ -123,8 +133,8 @@ export class IncidentDetail implements OnInit {
     }
   }
 
-  protected load(): void {
-    this.loading.set(true);
+  protected load(quietly = false): void {
+    this.loading.set(!quietly);
     this.loadError.set(null);
 
     forkJoin({

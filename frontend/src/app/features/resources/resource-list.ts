@@ -1,9 +1,11 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { LiveUpdates } from '../../core/live/live-updates';
 import { EnumLabelPipe } from '../../shared/enum-label.pipe';
 import { Resource } from './resource.models';
 import { ResourceService } from './resource.service';
@@ -17,6 +19,7 @@ import { ResourceService } from './resource.service';
 export class ResourceList implements OnInit {
   private readonly resourceService = inject(ResourceService);
   private readonly auth = inject(AuthService);
+  private readonly live = inject(LiveUpdates);
 
   protected readonly mayAdd = computed(() => this.auth.hasRole('ADMIN', 'DISPATCHER'));
 
@@ -29,12 +32,19 @@ export class ResourceList implements OnInit {
   protected readonly loading = signal(true);
   protected readonly failed = signal(false);
 
+  constructor() {
+    this.live
+      .when((update) => update.kind === 'RESOURCE')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.load(true));
+  }
+
   ngOnInit(): void {
     this.load();
   }
 
-  protected load(): void {
-    this.loading.set(true);
+  protected load(quietly = false): void {
+    this.loading.set(!quietly);
     this.failed.set(false);
 
     this.resourceService.list().subscribe({
