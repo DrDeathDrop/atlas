@@ -136,7 +136,7 @@ export class MapPage implements OnInit {
 
   constructor() {
     this.live
-      .when(() => true)
+      .when((update) => update.kind !== 'NOTIFICATION')
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.load(true));
   }

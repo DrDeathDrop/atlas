@@ -114,6 +114,8 @@ Done:
 
 - Live updates: changes are announced over WebSocket (STOMP) after the
   transaction commits, and open pages reload themselves
+- Notifications: stored per user after commit, with an unread count that
+  updates live
 
-Planned, in order: notifications, event system,
+Planned, in order: event system,
 priority scoring, disaster simulator, analytics, observability.

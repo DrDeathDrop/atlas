@@ -3,6 +3,7 @@ package io.github.drdeathdrop.atlas.notification.live;
 import io.github.drdeathdrop.atlas.facility.FacilityChanged;
 import io.github.drdeathdrop.atlas.incident.IncidentReported;
 import io.github.drdeathdrop.atlas.incident.IncidentStatusChanged;
+import io.github.drdeathdrop.atlas.notification.NotificationsCreated;
 import io.github.drdeathdrop.atlas.resource.ResourceAssigned;
 import io.github.drdeathdrop.atlas.resource.ResourceChanged;
 import io.github.drdeathdrop.atlas.resource.ResourceReleased;
@@ -70,6 +71,11 @@ public class LiveUpdateBroadcaster {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(RoadClosureChanged event) {
         send(LiveUpdateKind.ZONE, event.closureId());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void on(NotificationsCreated event) {
+        send(LiveUpdateKind.NOTIFICATION, null);
     }
 
     private void send(LiveUpdateKind kind, UUID id) {

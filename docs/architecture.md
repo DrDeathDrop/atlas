@@ -219,6 +219,34 @@ the next attempt. Bursts of notices are collapsed into one reload.
 The broker is Spring's in-memory one, which is enough for a single
 application instance. Running several instances would need a shared broker.
 
+## Notifications
+
+Some changes also leave a stored notification for the people who need to
+know. A bell in the top bar shows the unread count and the latest items.
+
+| Change | Who is notified |
+|---|---|
+| Incident reported, incident status changed | Admins and dispatchers |
+| Resource assigned or released | Field operators |
+
+Whoever made the change is not notified about it.
+
+Notifications are written after the original transaction commits, in a
+transaction of their own (`REQUIRES_NEW`). A failure to notify must never
+undo an incident report, and a listener that runs after commit has no open
+transaction left to write in. The price is that a crash between the two
+transactions loses the notification; that is acceptable for a convenience
+feature and would not be for the audit log.
+
+The `notification` module asks the `user` module who has a role through the
+`UserDirectory` interface and receives ids only. One row is stored per
+recipient, so "read" is a property of the row. A notification can be read or
+marked only by its recipient; another user's id is answered with 404.
+
+When notifications are stored, a `NOTIFICATION` notice goes out on the live
+channel. It carries no recipient: every open bell asks the server for its own
+unread count.
+
 ## Authentication
 
 Accounts are created by administrators; there is no public sign-up. Each user
@@ -306,8 +334,8 @@ sessions), the `incident` module (reporting, lifecycle, status changes,
 dispatch), the `resource` module (teams and vehicles, nearby search,
 assignment), the `facility` module (hospitals and shelters), the `zone`
 module (evacuation and affected zones, road closures), the `audit` module
-(append-only log of incident and resource events), live updates in the
-`notification` module, Liquibase migrations, Docker setup, CI.
+(append-only log of incident and resource events), live updates and stored
+notifications in the `notification` module, Liquibase migrations, Docker setup, CI.
 
 The frontend covers login, the incident list and detail pages, dispatching,
 the resource list, forms to report an incident and add a resource, and a map
@@ -315,4 +343,4 @@ of incidents, resources, facilities, zones and closed roads, on which zones,
 closures and facilities can be drawn. Lists, the incident page and the map
 reload themselves when something changes.
 
-Not yet implemented: stored notifications for users, and `analytics`.
+Not yet implemented: email notifications and `analytics`.

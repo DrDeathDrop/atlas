@@ -10,7 +10,17 @@
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
   font: var(--mat-sys-title-large);
+}
+
+.brand img {
+  display: block;
+  border-radius: 8px;
 }
 
 .nav {

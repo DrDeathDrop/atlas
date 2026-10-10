@@ -3,7 +3,7 @@ import { Client, StompConfig } from '@stomp/stompjs';
 import { Observable, Subject, debounceTime, filter } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 
-export type LiveUpdateKind = 'INCIDENT' | 'RESOURCE' | 'FACILITY' | 'ZONE' | 'RESYNC';
+export type LiveUpdateKind = 'INCIDENT' | 'RESOURCE' | 'FACILITY' | 'ZONE' | 'NOTIFICATION' | 'RESYNC';
 
 export interface LiveUpdate {
   kind: LiveUpdateKind;

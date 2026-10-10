@@ -19,3 +19,5 @@ databaseChangeLog:
       file: db/changelog/changes/0009-create-facilities.sql
   - include:
       file: db/changelog/changes/0010-create-zones.sql
+  - include:
+      file: db/changelog/changes/0011-create-notifications.sql

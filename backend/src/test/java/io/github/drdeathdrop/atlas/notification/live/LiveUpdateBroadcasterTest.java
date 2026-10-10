@@ -4,6 +4,7 @@ import io.github.drdeathdrop.atlas.facility.FacilityChanged;
 import io.github.drdeathdrop.atlas.incident.IncidentReported;
 import io.github.drdeathdrop.atlas.incident.IncidentStatus;
 import io.github.drdeathdrop.atlas.incident.IncidentStatusChanged;
+import io.github.drdeathdrop.atlas.notification.NotificationsCreated;
 import io.github.drdeathdrop.atlas.resource.ResourceAssigned;
 import io.github.drdeathdrop.atlas.resource.ResourceChanged;
 import io.github.drdeathdrop.atlas.resource.ResourceReleased;
@@ -91,6 +92,13 @@ class LiveUpdateBroadcasterTest {
         verifySent(LiveUpdateKind.FACILITY, facility);
         verifySent(LiveUpdateKind.ZONE, zone);
         verifySent(LiveUpdateKind.ZONE, closure);
+    }
+
+    @Test
+    void newNotificationsAreAnnouncedWithoutSayingWhoTheyAreFor() {
+        broadcaster.on(new NotificationsCreated(3));
+
+        verifySent(LiveUpdateKind.NOTIFICATION, null);
     }
 
     @Test

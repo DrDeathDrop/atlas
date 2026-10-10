@@ -4,5 +4,6 @@ public enum LiveUpdateKind {
     INCIDENT,
     RESOURCE,
     FACILITY,
-    ZONE
+    ZONE,
+    NOTIFICATION
 }

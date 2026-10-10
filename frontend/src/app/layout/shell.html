@@ -1,5 +1,8 @@
 <mat-toolbar class="toolbar">
-  <span class="brand">Atlas</span>
+  <a class="brand" routerLink="/">
+    <img src="favicon.svg" alt="" width="32" height="32" />
+    <span>Atlas</span>
+  </a>
 
   <nav class="nav">
     <a mat-button routerLink="/incidents" routerLinkActive="active">Incidents</a>
@@ -12,6 +15,8 @@
   <span class="live" [class.on]="isLive()" role="status">
     <span class="dot" aria-hidden="true"></span>{{ isLive() ? 'Live' : 'Offline' }}
   </span>
+
+  <app-notification-bell />
 
   @if (user(); as current) {
     <span class="user">

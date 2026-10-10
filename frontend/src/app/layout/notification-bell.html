@@ -1,0 +1,46 @@
+<button
+  mat-button
+  type="button"
+  class="bell"
+  [attr.aria-label]="unread() === 0 ? 'Notifications' : 'Notifications, ' + unread() + ' unread'"
+  [attr.aria-expanded]="open()"
+  (click)="toggle()"
+>
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+    <path
+      fill="currentColor"
+      d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6v-5a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"
+    />
+  </svg>
+  @if (unread() > 0) {
+    <span class="count">{{ unread() > 99 ? '99+' : unread() }}</span>
+  }
+</button>
+
+@if (open()) {
+  <section class="panel" aria-label="Notifications">
+    <header class="panel-header">
+      <h2>Notifications</h2>
+      <button mat-button type="button" (click)="markAllRead()" [disabled]="unread() === 0">Mark all read</button>
+    </header>
+
+    @if (items(); as list) {
+      @if (list.length === 0) {
+        <p class="empty">Nothing yet.</p>
+      } @else {
+        <ul class="list">
+          @for (notification of list; track notification.id) {
+            <li>
+              <button type="button" class="item" [class.unread]="!notification.read" (click)="select(notification)">
+                <span class="title">{{ notification.title }}</span>
+                <span class="time">{{ notification.createdAt | date: 'd MMM, HH:mm' }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <p class="empty">Loading…</p>
+    }
+  </section>
+}
