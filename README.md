@@ -66,6 +66,7 @@ All settings have defaults that work locally. Outside local development, set:
 |---|---|
 | `ATLAS_JWT_SECRET` | Signing key for access tokens, at least 32 characters |
 | `ATLAS_ADMIN_EMAIL`, `ATLAS_ADMIN_PASSWORD` | The first administrator, created when none exists |
+| `ATLAS_DEMO_DATA` | Set to `true` to add sample teams and vehicles around Plovdiv at startup |
 | `ATLAS_DB_URL` | Database address |
 | `ATLAS_DB_USER`, `ATLAS_DB_PASSWORD` | The database owner, used only to run migrations |
 | `ATLAS_DB_APP_PASSWORD` | Password of `atlas_app`, the restricted user the application runs as |
@@ -105,5 +106,9 @@ Done:
 - Resources: teams and vehicles, a PostGIS search for what is available near
   an incident, and assignment that is safe under concurrent requests
 
-Planned, in order: operations dashboard, map, real-time updates, event system,
+- Operations dashboard: an Angular application to log in, browse and report
+  incidents, change their status, dispatch nearby resources and read the
+  audit history
+
+Planned, in order: map, real-time updates, event system,
 priority scoring, disaster simulator, analytics, observability.

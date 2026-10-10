@@ -189,6 +189,33 @@ Known limitation: disabling a user does not invalidate an access token that
 was already issued. It stops working when it expires, at most 15 minutes
 later, and cannot be refreshed.
 
+## Frontend
+
+The Angular application is organised the same way as the backend, by feature:
+
+```
+frontend/src/app
+├── core/auth/        login state, token refresh, route guards
+├── layout/           the shell around every page
+├── features/
+│   ├── auth/         login page
+│   ├── incidents/    list, detail, dispatch panel, report form
+│   └── resources/    list, add form
+└── shared/           small reusable pieces
+```
+
+The access token is kept in memory only. On page load the application calls
+the refresh endpoint, so a reload does not log the user out. An HTTP
+interceptor adds the token to API requests and, on a 401, refreshes it once
+and repeats the request; concurrent failures share a single refresh.
+
+The frontend never decides what a user is allowed to do. It asks the server
+which status changes are available for an incident and shows those. Hiding a
+button is a convenience; every rule is enforced again by the API.
+
+State is held in signals inside components and services. There is no state
+management library.
+
 ## Technology
 
 | Area | Choice |
@@ -209,5 +236,8 @@ dispatch), the `resource` module (teams and vehicles, nearby search,
 assignment), the `audit` module (append-only log of incident and resource
 events), Liquibase migrations, Docker setup, CI.
 
+The frontend covers login, the incident list and detail pages, dispatching,
+the resource list, and forms to report an incident and add a resource.
+
 Not yet implemented: `notification` and `analytics`, places such as shelters
-and hospitals, and the frontend beyond its skeleton.
+and hospitals, the map, and live updates.

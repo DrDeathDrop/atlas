@@ -30,6 +30,8 @@ atlas:
       access-token-ttl: 15m
     refresh-token:
       ttl: 7d
+  demo-data:
+    enabled: ${ATLAS_DEMO_DATA:false}
   bootstrap:
     admin:
       email: ${ATLAS_ADMIN_EMAIL:admin@atlas.local}

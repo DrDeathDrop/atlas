@@ -1,5 +1,6 @@
 package io.github.drdeathdrop.atlas.incident.core;
 
+import io.github.drdeathdrop.atlas.incident.IncidentStatus;
 import io.github.drdeathdrop.atlas.incident.IncidentSummary;
 import io.github.drdeathdrop.atlas.user.Role;
 import jakarta.validation.Valid;
@@ -44,6 +45,11 @@ public class IncidentController {
     @GetMapping("/{incidentId}")
     public IncidentSummary get(@PathVariable UUID incidentId) {
         return incidentService.get(incidentId);
+    }
+
+    @GetMapping("/{incidentId}/allowed-transitions")
+    public List<IncidentStatus> allowedTransitions(@PathVariable UUID incidentId, @AuthenticationPrincipal Jwt jwt) {
+        return incidentService.allowedTransitions(incidentId, role(jwt));
     }
 
     @PatchMapping("/{incidentId}/status")

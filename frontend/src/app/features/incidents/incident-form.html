@@ -1,0 +1,87 @@
+<a class="back" routerLink="/incidents">← All incidents</a>
+
+<h1>Report an incident</h1>
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-form-field appearance="outline">
+    <mat-label>Title</mat-label>
+    <input matInput formControlName="title" maxlength="200" />
+    @if (form.controls.title.hasError('required')) {
+      <mat-error>Give the incident a short title</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Description</mat-label>
+    <textarea matInput formControlName="description" rows="4"></textarea>
+    @if (form.controls.description.hasError('required')) {
+      <mat-error>Describe what is happening</mat-error>
+    }
+  </mat-form-field>
+
+  <div class="row">
+    <mat-form-field appearance="outline">
+      <mat-label>Category</mat-label>
+      <select matNativeControl formControlName="category">
+        <option value="" disabled></option>
+        @for (category of categories; track category) {
+          <option [value]="category">{{ category | enumLabel }}</option>
+        }
+      </select>
+      @if (form.controls.category.hasError('required')) {
+        <mat-error>Choose a category</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Severity</mat-label>
+      <select matNativeControl formControlName="severity">
+        <option value="" disabled></option>
+        @for (severity of severities; track severity) {
+          <option [value]="severity">{{ severity | enumLabel }}</option>
+        }
+      </select>
+      @if (form.controls.severity.hasError('required')) {
+        <mat-error>Choose a severity</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="row">
+    <mat-form-field appearance="outline">
+      <mat-label>Latitude</mat-label>
+      <input matInput type="number" step="any" formControlName="latitude" placeholder="42.1354" />
+      @if (form.controls.latitude.invalid) {
+        <mat-error>Enter a latitude between -90 and 90</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Longitude</mat-label>
+      <input matInput type="number" step="any" formControlName="longitude" placeholder="24.7453" />
+      @if (form.controls.longitude.invalid) {
+        <mat-error>Enter a longitude between -180 and 180</mat-error>
+      }
+    </mat-form-field>
+  </div>
+  <p class="hint">Plovdiv city centre is about 42.1354, 24.7453.</p>
+
+  <mat-form-field appearance="outline">
+    <mat-label>People affected (estimate)</mat-label>
+    <input matInput type="number" min="0" step="1" formControlName="affectedPeople" />
+    @if (form.controls.affectedPeople.invalid) {
+      <mat-error>Enter zero or a positive number</mat-error>
+    }
+  </mat-form-field>
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <div class="actions">
+    <a mat-button routerLink="/incidents">Cancel</a>
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Reporting…' : 'Report incident' }}
+    </button>
+  </div>
+</form>

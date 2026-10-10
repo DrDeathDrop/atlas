@@ -24,6 +24,7 @@ services:
       ATLAS_DB_URL: jdbc:postgresql://postgres:5432/atlas
       ATLAS_DB_USER: atlas
       ATLAS_DB_PASSWORD: atlas
+      ATLAS_DEMO_DATA: "true"
     ports:
       - "8080:8080"
     depends_on:

@@ -1,0 +1,102 @@
+<a class="back" routerLink="/incidents">← All incidents</a>
+
+@if (loading() && !incident()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (loadError(); as message) {
+  <p class="message error" role="alert">{{ message }}</p>
+}
+
+@if (incident(); as current) {
+  <header class="header">
+    <div>
+      <p class="reference">{{ current.reference }}</p>
+      <h1>{{ current.title }}</h1>
+    </div>
+    <div class="badges">
+      <app-severity-badge [severity]="current.severity" />
+      <app-status-badge [status]="current.status" />
+    </div>
+  </header>
+
+  @if (transitions().length > 0) {
+    <section class="actions" aria-label="Change status">
+      @for (target of transitions(); track target) {
+        @if (isForward(target)) {
+          <button
+            mat-flat-button
+            type="button"
+            [disabled]="changing()"
+            (click)="changeStatus(target)"
+          >
+            {{ actionLabel(target) }}
+          </button>
+        } @else {
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="changing()"
+            (click)="changeStatus(target)"
+          >
+            {{ actionLabel(target) }}
+          </button>
+        }
+      }
+    </section>
+  }
+
+  @if (actionError(); as message) {
+    <p class="message error left" role="alert">{{ message }}</p>
+  }
+
+  <div class="columns">
+    <div class="stack">
+      <section class="panel">
+        <h2>Details</h2>
+        <p class="description">{{ current.description }}</p>
+        <dl class="facts">
+          <div>
+            <dt>Category</dt>
+            <dd>{{ current.category | enumLabel }}</dd>
+          </div>
+          <div>
+            <dt>People affected</dt>
+            <dd>{{ current.affectedPeople.toLocaleString() }}</dd>
+          </div>
+          <div>
+            <dt>Location</dt>
+            <dd>{{ current.latitude.toFixed(4) }}, {{ current.longitude.toFixed(4) }}</dd>
+          </div>
+          <div>
+            <dt>Reported</dt>
+            <dd>{{ current.createdAt | date: 'd MMM y, HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>Last updated</dt>
+            <dd>{{ current.updatedAt | date: 'd MMM y, HH:mm' }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <app-incident-dispatch [incident]="current" (changed)="load()" />
+    </div>
+
+    @if (history(); as entries) {
+      <section class="panel">
+        <h2>History</h2>
+        <ol class="timeline">
+          @for (entry of entries; track entry.id) {
+            <li>
+              <span class="what">{{ describe(entry) }}</span>
+              <span class="who">
+                {{ entry.actorRole | enumLabel }} ·
+                {{ entry.occurredAt | date: 'd MMM y, HH:mm:ss' }}
+              </span>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  </div>
+}

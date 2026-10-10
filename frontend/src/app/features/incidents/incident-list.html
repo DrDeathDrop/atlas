@@ -1,0 +1,63 @@
+<header class="header">
+  <h1>Incidents</h1>
+  <div class="header-actions">
+    <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()">Refresh</button>
+    @if (mayReport()) {
+      <a mat-flat-button routerLink="/incidents/new">Report incident</a>
+    }
+  </div>
+</header>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (failed()) {
+  <p class="message error" role="alert">The incidents could not be loaded. Check that the server is running and try again.</p>
+} @else if (!loading() && incidents().length === 0) {
+  <p class="message">No incidents have been reported yet.</p>
+} @else if (incidents().length > 0) {
+  <div class="table-wrapper">
+    <table mat-table [dataSource]="incidents()">
+      <ng-container matColumnDef="reference">
+        <th mat-header-cell *matHeaderCellDef>Reference</th>
+        <td mat-cell *matCellDef="let incident" class="reference">
+          <a [routerLink]="['/incidents', incident.id]">{{ incident.reference }}</a>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="title">
+        <th mat-header-cell *matHeaderCellDef>Title</th>
+        <td mat-cell *matCellDef="let incident">{{ incident.title }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef>Category</th>
+        <td mat-cell *matCellDef="let incident">{{ incident.category | enumLabel }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="severity">
+        <th mat-header-cell *matHeaderCellDef>Severity</th>
+        <td mat-cell *matCellDef="let incident"><app-severity-badge [severity]="incident.severity" /></td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let incident"><app-status-badge [status]="incident.status" /></td>
+      </ng-container>
+
+      <ng-container matColumnDef="affectedPeople">
+        <th mat-header-cell *matHeaderCellDef class="number">People affected</th>
+        <td mat-cell *matCellDef="let incident" class="number">{{ incident.affectedPeople.toLocaleString() }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef>Reported</th>
+        <td mat-cell *matCellDef="let incident">{{ incident.createdAt | date: 'd MMM y, HH:mm' }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    </table>
+  </div>
+}

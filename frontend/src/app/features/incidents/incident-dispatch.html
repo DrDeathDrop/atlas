@@ -1,0 +1,73 @@
+<section class="panel">
+  <h2>Assigned resources</h2>
+
+  @if (assignments().length === 0) {
+    <p class="empty">Nothing has been sent to this incident.</p>
+  } @else {
+    <ul class="rows">
+      @for (assignment of assignments(); track assignment.id) {
+        <li [class.released]="assignment.releasedAt">
+          <span class="main">
+            <span class="call-sign">{{ assignment.callSign }}</span>
+            <span class="note">
+              Assigned {{ assignment.assignedAt | date: 'd MMM, HH:mm' }}
+              @if (assignment.releasedAt) {
+                · released {{ assignment.releasedAt | date: 'd MMM, HH:mm' }}
+              }
+            </span>
+          </span>
+          @if (!assignment.releasedAt && mayDispatch()) {
+            <button mat-stroked-button type="button" [disabled]="busy()" (click)="release(assignment.id)">
+              Release
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  @if (showsNearby()) {
+    <div class="nearby-header">
+      <h2>
+        Available nearby
+        @if (nearby(); as found) {
+          <span class="count">{{ found.length }} within {{ radiusKm() }} km</span>
+        }
+      </h2>
+      <mat-button-toggle-group
+        [value]="radiusKm()"
+        (change)="chooseRadius($event.value)"
+        aria-label="Search radius"
+        hideSingleSelectionIndicator
+      >
+        @for (option of radiusOptions; track option) {
+          <mat-button-toggle [value]="option">{{ option }} km</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </div>
+
+    @if (nearby(); as found) {
+      @if (found.length === 0) {
+        <p class="empty">No available resources within {{ radiusKm() }} km.</p>
+      } @else {
+        <ul class="rows">
+          @for (item of found; track item.resource.id) {
+            <li>
+              <span class="main">
+                <span class="call-sign">{{ item.resource.callSign }}</span>
+                <span class="note">{{ item.resource.type | enumLabel }} · {{ kilometres(item.distanceMeters) }} km away</span>
+              </span>
+              <button mat-flat-button type="button" [disabled]="busy()" (click)="dispatch(item.resource.id)">
+                Dispatch
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+</section>

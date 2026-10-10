@@ -1,6 +1,5 @@
 package io.github.drdeathdrop.atlas.incident.core;
 
-import ch.qos.logback.core.status.Status;
 import io.github.drdeathdrop.atlas.incident.IncidentReported;
 import io.github.drdeathdrop.atlas.incident.IncidentStatus;
 import io.github.drdeathdrop.atlas.incident.IncidentStatusChanged;
@@ -77,6 +76,16 @@ public class IncidentService {
         return repository.findById(incidentId)
                 .map(IncidentService::toSummary)
                 .orElseThrow(() -> new IncidentNotFoundException(incidentId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<IncidentStatus> allowedTransitions(UUID incidentId, Role role) {
+        IncidentStatus current = get(incidentId).status();
+
+        return lifecycle.allowedNext(current).stream()
+                .filter(next -> lifecycle.isPermitted(role, current, next))
+                .sorted()
+                .toList();
     }
 
     @Transactional(readOnly = true)

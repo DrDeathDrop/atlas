@@ -170,6 +170,26 @@ class IncidentServiceTest {
         verifyNoInteractions(events);
     }
 
+    @Test
+    void allowedTransitionsListsOnlyWhatTheRoleMayDo() {
+        UUID incidentId = UUID.randomUUID();
+        when(repository.findById(incidentId)).thenReturn(Optional.of(incidentIn(IncidentStatus.CONTAINED)));
+
+        assertThat(service.allowedTransitions(incidentId, Role.DISPATCHER))
+                .containsExactly(IncidentStatus.ACTIVE, IncidentStatus.RESOLVED);
+        assertThat(service.allowedTransitions(incidentId, Role.FIELD_OPERATOR)).isEmpty();
+        assertThat(service.allowedTransitions(incidentId, Role.VIEWER)).isEmpty();
+    }
+
+    @Test
+    void allowedTransitionsGivesAFieldOperatorTheirSingleMove() {
+        UUID incidentId = UUID.randomUUID();
+        when(repository.findById(incidentId)).thenReturn(Optional.of(incidentIn(IncidentStatus.ACTIVE)));
+
+        assertThat(service.allowedTransitions(incidentId, Role.FIELD_OPERATOR))
+                .containsExactly(IncidentStatus.CONTAINED);
+    }
+
     private static ReportIncidentRequest floodRequest() {
         return new ReportIncidentRequest(
                 "Flood in Plovdiv",

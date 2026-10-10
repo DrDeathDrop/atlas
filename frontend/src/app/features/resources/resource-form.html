@@ -1,0 +1,58 @@
+<a class="back" routerLink="/resources">← All resources</a>
+
+<h1>Add a resource</h1>
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="row">
+    <mat-form-field appearance="outline">
+      <mat-label>Call sign</mat-label>
+      <input matInput formControlName="callSign" maxlength="64" placeholder="AMBULANCE-40" />
+      @if (form.controls.callSign.hasError('required')) {
+        <mat-error>Enter a call sign</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Type</mat-label>
+      <select matNativeControl formControlName="type">
+        <option value="" disabled></option>
+        @for (type of types; track type) {
+          <option [value]="type">{{ type | enumLabel }}</option>
+        }
+      </select>
+      @if (form.controls.type.hasError('required')) {
+        <mat-error>Choose a type</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="row">
+    <mat-form-field appearance="outline">
+      <mat-label>Latitude</mat-label>
+      <input matInput type="number" step="any" formControlName="latitude" placeholder="42.1354" />
+      @if (form.controls.latitude.invalid) {
+        <mat-error>Enter a latitude between -90 and 90</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Longitude</mat-label>
+      <input matInput type="number" step="any" formControlName="longitude" placeholder="24.7453" />
+      @if (form.controls.longitude.invalid) {
+        <mat-error>Enter a longitude between -180 and 180</mat-error>
+      }
+    </mat-form-field>
+  </div>
+  <p class="hint">Plovdiv city centre is about 42.1354, 24.7453.</p>
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <div class="actions">
+    <a mat-button routerLink="/resources">Cancel</a>
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Adding…' : 'Add resource' }}
+    </button>
+  </div>
+</form>

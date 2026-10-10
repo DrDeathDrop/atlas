@@ -1,0 +1,48 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.toolbar {
+  gap: 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.brand {
+  font: var(--mat-sys-title-large);
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+}
+
+.nav .active {
+  background-color: var(--mat-sys-secondary-container);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.name {
+  font: var(--mat-sys-label-large);
+}
+
+.role {
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+}
