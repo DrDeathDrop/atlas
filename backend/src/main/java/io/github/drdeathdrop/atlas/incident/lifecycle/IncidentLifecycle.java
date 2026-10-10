@@ -2,10 +2,12 @@ package io.github.drdeathdrop.atlas.incident.lifecycle;
 
 import io.github.drdeathdrop.atlas.incident.IncidentStatus;
 import io.github.drdeathdrop.atlas.user.Role;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Set;
 
+@Component
 public class IncidentLifecycle {
     private static final Map<IncidentStatus, Set<IncidentStatus>> ALLOWED = Map.of(
             IncidentStatus.REPORTED, Set.of(IncidentStatus.VERIFIED, IncidentStatus.REJECTED),

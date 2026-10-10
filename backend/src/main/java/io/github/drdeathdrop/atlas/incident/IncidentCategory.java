@@ -1,0 +1,24 @@
+package io.github.drdeathdrop.atlas.incident;
+
+public enum IncidentCategory {
+    FLOOD,
+    WILDFIRE,
+    EARTHQUAKE,
+    LANDSLIDE,
+    SINKHOLE,
+    AVALANCHE,
+    SEVERE_WEATHER,
+    STRUCTURE_FIRE,
+    EXPLOSION,
+    CHEMICAL_LEAK,
+    GAS_LEAK,
+    ROAD_ACCIDENT,
+    RAIL_ACCIDENT,
+    AVIATION_ACCIDENT,
+    BUILDING_COLLAPSE,
+    POWER_OUTAGE,
+    WATER_SUPPLY_FAILURE,
+    MEDICAL_EMERGENCY,
+    MISSING_PERSON,
+    OTHER
+}
