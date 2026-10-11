@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { CurrentUser } from './auth.models';
 import { AuthService } from './auth.service';
+import { CROSS_TAB_LOCK, PAGE_RELOAD, SESSION_CHANNEL, SessionChannel } from './session-sync';
 
 const dispatcher: CurrentUser = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -111,5 +112,128 @@ describe('AuthService', () => {
 
     expect(service.isLoggedIn()).toBe(false);
     expect(service.token()).toBeNull();
+  });
+});
+
+describe('AuthService across browser tabs', () => {
+  let service: AuthService;
+  let http: HttpTestingController;
+  let channel: SessionChannel & { sent: unknown[]; closed: boolean; receive: (message: unknown) => void };
+  let reloads: number;
+  let lockUses: number;
+
+  function tokenFor(userId: string): string {
+    return `header.${btoa(JSON.stringify({ sub: userId }))}.signature`;
+  }
+
+  beforeEach(() => {
+    reloads = 0;
+    lockUses = 0;
+    channel = {
+      sent: [],
+      closed: false,
+      receive: () => undefined,
+      listen(handler: (message: unknown) => void) {
+        this.receive = handler;
+      },
+      postMessage(message: unknown) {
+        this.sent.push(message);
+      },
+      close() {
+        this.closed = true;
+      },
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SESSION_CHANNEL, useValue: channel },
+        { provide: PAGE_RELOAD, useValue: () => reloads++ },
+        {
+          provide: CROSS_TAB_LOCK,
+          useValue: <T>(work: () => Promise<T>) => {
+            lockUses++;
+            return work();
+          },
+        },
+      ],
+    });
+    service = TestBed.inject(AuthService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  function logIn(): void {
+    service.login('dispatcher@atlas.local', 'secret123').subscribe();
+    http.expectOne('/api/auth/login').flush({ accessToken: tokenFor(dispatcher.id), tokenType: 'Bearer', expiresIn: 900 });
+    http.expectOne('/api/auth/me').flush(dispatcher);
+  }
+
+  it('tells the other tabs when someone logs in or out', () => {
+    logIn();
+    expect(channel.sent).toEqual(['session-changed']);
+
+    service.logout().subscribe();
+    http.expectOne('/api/auth/logout').flush(null);
+
+    expect(channel.sent).toEqual(['session-changed', 'session-changed']);
+  });
+
+  it('says nothing to other tabs when it only restores its own session', () => {
+    service.restoreSession().subscribe();
+
+    return Promise.resolve().then(() => {
+      http.expectOne('/api/auth/refresh').flush({ accessToken: 'access-2', tokenType: 'Bearer', expiresIn: 900 });
+      return Promise.resolve().then(() => Promise.resolve()).then(() => {
+        http.expectOne('/api/auth/me').flush(dispatcher);
+        expect(channel.sent).toEqual([]);
+      });
+    });
+  });
+
+  it('reloads when another tab changes who is logged in', () => {
+    logIn();
+
+    channel.receive('session-changed');
+    channel.receive('something else');
+
+    expect(reloads).toBe(1);
+  });
+
+  it('reloads when a refreshed token belongs to a different user', async () => {
+    logIn();
+
+    service.refresh().subscribe();
+    await Promise.resolve();
+    http
+      .expectOne('/api/auth/refresh')
+      .flush({ accessToken: tokenFor('22222222-2222-2222-2222-222222222222'), tokenType: 'Bearer', expiresIn: 900 });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(reloads).toBe(1);
+  });
+
+  it('does not reload when a refreshed token belongs to the same user', async () => {
+    logIn();
+
+    service.refresh().subscribe();
+    await Promise.resolve();
+    http
+      .expectOne('/api/auth/refresh')
+      .flush({ accessToken: tokenFor(dispatcher.id), tokenType: 'Bearer', expiresIn: 900 });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(reloads).toBe(0);
+    expect(lockUses).toBe(1);
+  });
+
+  it('stops listening when it is destroyed', () => {
+    TestBed.resetTestingModule();
+
+    expect(channel.closed).toBe(true);
   });
 });

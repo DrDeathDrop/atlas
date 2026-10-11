@@ -1,0 +1,137 @@
+<header class="header">
+  <h1>Disaster simulator</h1>
+  <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()">Refresh</button>
+</header>
+
+<p class="intro">
+  Generates a wave of made-up incidents around a point, one at a time, through the same path as real reports. Use it
+  to practise or to show the system under load. Simulated incidents are marked as such in their title.
+</p>
+
+<div class="columns">
+  <form class="panel" [formGroup]="form" (ngSubmit)="start()" novalidate>
+    <h2>New simulation</h2>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Scenario</mat-label>
+      <select matNativeControl formControlName="scenario">
+        @for (scenario of scenarios; track scenario) {
+          <option [value]="scenario">{{ scenario | enumLabel }}</option>
+        }
+      </select>
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>Incidents</mat-label>
+        <input matInput type="number" min="1" max="50" formControlName="incidents" />
+        @if (form.controls.incidents.invalid) {
+          <mat-error>Between 1 and 50</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Seconds between incidents</mat-label>
+        <input matInput type="number" min="1" max="120" formControlName="intervalSeconds" />
+        @if (form.controls.intervalSeconds.invalid) {
+          <mat-error>Between 1 and 120</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Radius (km)</mat-label>
+        <input matInput type="number" min="0.5" max="100" step="any" formControlName="radiusKm" />
+        @if (form.controls.radiusKm.invalid) {
+          <mat-error>Between 0.5 and 100</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="row two">
+      <mat-form-field appearance="outline">
+        <mat-label>Centre latitude</mat-label>
+        <input matInput type="number" step="any" formControlName="latitude" />
+        @if (form.controls.latitude.invalid) {
+          <mat-error>Between -90 and 90</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Centre longitude</mat-label>
+        <input matInput type="number" step="any" formControlName="longitude" />
+        @if (form.controls.longitude.invalid) {
+          <mat-error>Between -180 and 180</mat-error>
+        }
+      </mat-form-field>
+    </div>
+    @if (isRandom()) {
+      <p class="hint">Every incident is of a random kind: a fire, then a road accident, then a flood.</p>
+    } @else {
+      <mat-checkbox formControlName="relatedIncidents">
+        Include related incidents, such as power cuts and accidents caused by the disaster
+      </mat-checkbox>
+    }
+
+    <p class="hint">Click the map to move the centre.</p>
+    <app-map-view class="picker" [pickable]="true" [picked]="centre()" (pick)="placeAt($event)" />
+
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <div class="actions">
+      @if (running()) {
+        <span class="hint">A simulation is running. Stop it or wait for it to finish.</span>
+      }
+      <button mat-flat-button type="submit" [disabled]="busy() || running() !== null">Start simulation</button>
+    </div>
+  </form>
+
+  <section class="panel">
+    <h2>Runs</h2>
+
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (failed()) {
+      <p class="error" role="alert">The runs could not be loaded.</p>
+    } @else if (!loading() && runs().length === 0) {
+      <p class="hint">No simulation has been run yet.</p>
+    } @else {
+      <ul class="runs">
+        @for (run of runs(); track run.id) {
+          <li class="run">
+            <div class="run-header">
+              <strong>{{ run.scenario | enumLabel }}</strong>
+              <span class="status" [class]="run.status.toLowerCase()">{{ run.status | enumLabel }}</span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="percent(run)"
+              [attr.aria-label]="run.created + ' of ' + run.planned + ' incidents created'"
+            />
+            <div class="run-footer">
+              <span>
+                {{ run.created }} of {{ run.planned }} incidents · every {{ run.intervalSeconds }} s ·
+                {{ run.radiusKm }} km · {{ mix(run) }} · started {{ run.startedAt | date: 'd MMM, HH:mm:ss' }}
+              </span>
+              @if (run.status === 'RUNNING') {
+                <button mat-stroked-button type="button" (click)="stop(run)" [disabled]="busy()">Stop</button>
+              } @else if (run.status === 'STOPPED' && run.created < run.planned) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="resume(run)"
+                  [disabled]="busy() || running() !== null"
+                >
+                  Resume
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>

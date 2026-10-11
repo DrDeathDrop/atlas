@@ -39,6 +39,8 @@ atlas:
       access-token-ttl: 15m
     refresh-token:
       ttl: 7d
+  simulation:
+    tick: 1s
   events:
     relay-delay: 1s
     cleanup-delay: 1h

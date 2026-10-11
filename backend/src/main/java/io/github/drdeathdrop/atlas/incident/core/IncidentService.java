@@ -1,9 +1,11 @@
 package io.github.drdeathdrop.atlas.incident.core;
 
+import io.github.drdeathdrop.atlas.incident.IncidentIntake;
 import io.github.drdeathdrop.atlas.incident.IncidentReported;
 import io.github.drdeathdrop.atlas.incident.IncidentStatus;
 import io.github.drdeathdrop.atlas.incident.IncidentStatusChanged;
 import io.github.drdeathdrop.atlas.incident.IncidentSummary;
+import io.github.drdeathdrop.atlas.incident.NewIncident;
 import io.github.drdeathdrop.atlas.incident.lifecycle.IncidentLifecycle;
 import io.github.drdeathdrop.atlas.shared.geo.GeoPoints;
 import io.github.drdeathdrop.atlas.user.Role;
@@ -18,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class IncidentService {
+public class IncidentService implements IncidentIntake {
     private final IncidentRepository repository;
     private final IncidentLifecycle lifecycle;
     private final ApplicationEventPublisher events;
@@ -32,6 +34,19 @@ public class IncidentService {
 
     @Transactional
     public IncidentSummary report(ReportIncidentRequest request, UUID reportedBy, Role role) {
+        return report(new NewIncident(
+                request.title(),
+                request.description(),
+                request.category(),
+                request.severity(),
+                request.latitude(),
+                request.longitude(),
+                request.affectedPeople()), reportedBy, role);
+    }
+
+    @Override
+    @Transactional
+    public IncidentSummary report(NewIncident request, UUID reportedBy, Role role) {
         long number = repository.nextReferenceNumber();
         String reference = String.format("INC-%d-%04d", Year.now().getValue(), number);
 

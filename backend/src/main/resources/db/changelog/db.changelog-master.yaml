@@ -23,3 +23,7 @@ databaseChangeLog:
       file: db/changelog/changes/0011-create-notifications.sql
   - include:
       file: db/changelog/changes/0012-create-outbox.sql
+  - include:
+      file: db/changelog/changes/0013-create-simulations.sql
+  - include:
+      file: db/changelog/changes/0014-add-simulation-related-incidents.sql

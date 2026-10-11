@@ -35,6 +35,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/map/map-page').then((module) => module.MapPage),
       },
       {
+        path: 'simulator',
+        canActivate: [roleGuard('ADMIN')],
+        loadComponent: () =>
+          import('./features/simulator/simulator-page').then((module) => module.SimulatorPage),
+      },
+      {
         path: 'resources',
         loadComponent: () =>
           import('./features/resources/resource-list').then((module) => module.ResourceList),

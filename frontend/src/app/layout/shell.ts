@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -20,6 +20,7 @@ export class Shell implements OnInit, OnDestroy {
 
   protected readonly user = this.auth.user;
   protected readonly isLive = this.live.connected;
+  protected readonly isAdmin = computed(() => this.auth.hasRole('ADMIN'));
 
   ngOnInit(): void {
     this.live.start();

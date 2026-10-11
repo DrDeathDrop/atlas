@@ -20,6 +20,7 @@ io.github.drdeathdrop.atlas
 ├── audit/           append-only audit log
 ├── notification/    live updates over WebSocket; in-app and email notifications
 ├── messaging/       outbox, RabbitMQ exchanges and queues
+├── simulation/      the disaster simulator
 ├── analytics/       statistics and reports
 └── shared/          small: base types, error model, security helpers
 ```
@@ -250,6 +251,43 @@ the next attempt. Bursts of notices are collapsed into one reload.
 The broker is Spring's in-memory one, which is enough for a single
 application instance. Running several instances would need a shared broker.
 
+## Disaster simulator
+
+An administrator can start a simulated disaster: a scenario (flood,
+earthquake, wildfire, industrial accident, severe storm, or a random mix), a
+centre, a radius,
+a number of incidents and a pace. The simulator then reports made-up
+incidents one at a time.
+
+Simulated incidents take exactly the same path as real ones. The simulator
+calls the incident module's public `IncidentIntake` interface, so each
+incident is audited, written to the outbox, announced live, scored and
+notified like any other. Nothing in the rest of the system knows or cares
+that it came from a simulation, which is what makes the simulator a fair
+test of the whole pipeline. Runs and the incidents they created are linked in
+their own tables, so simulated data can be told apart later.
+
+**No threads to manage.** A run is a row with a `next_incident_at` time. A
+scheduled tick, once a second, locks the runs that are due
+(`FOR UPDATE SKIP LOCKED`), reports one incident for each, and moves the time
+forward. The incident, the link and the run's progress are saved in one
+transaction. Because the state is in the database, a run survives a restart,
+works with several application instances, and can be stopped by changing its
+status.
+
+**Reproducible.** Each incident is generated from the run's seed and its
+position in the run. The same seed gives the same disaster, which makes the
+generator testable and a demonstration repeatable.
+
+By default a scenario produces incidents of its own kind only: a flood
+produces floods. Optionally it also produces the knock-on incidents a real
+disaster causes, such as power cuts and road accidents.
+
+Only one run may be active at a time; a partial unique index enforces it. A
+stopped run can be resumed and continues where it left off. Stopping and
+resuming lock the run's row, so they cannot interleave with a tick that is
+reporting an incident for the same run.
+
 ## Events and messaging
 
 Some work does not have to happen at the moment of a change, but must not be
@@ -376,6 +414,16 @@ the refresh endpoint, so a reload does not log the user out. An HTTP
 interceptor adds the token to API requests and, on a 401, refreshes it once
 and repeats the request; concurrent failures share a single refresh.
 
+The refresh cookie belongs to the browser, not to a tab, so every tab of one
+browser shares one session. The frontend keeps the tabs consistent: a login or
+logout in one tab is announced to the others over a `BroadcastChannel` and
+they reload as the new user, and a tab that receives a token for a different
+user than it is showing reloads as well. Token refreshes are serialised
+across tabs with the Web Locks API, because two tabs refreshing at once with
+the same rotating token would look like token theft to the server and end the
+session. Two different users at the same time need two browsers or a private
+window.
+
 The frontend never decides what a user is allowed to do. It asks the server
 which status changes are available for an incident and shows those. Hiding a
 button is a convenience; every rule is enforced again by the API.
@@ -413,7 +461,7 @@ assignment), priority scoring of incidents, the `facility` module (hospitals and
 module (evacuation and affected zones, road closures), the `audit` module
 (append-only log of incident and resource events), live updates and stored
 notifications in the `notification` module, the `messaging` module (outbox
-and RabbitMQ), Liquibase migrations, Docker setup, CI.
+and RabbitMQ), the `simulation` module (disaster simulator), Liquibase migrations, Docker setup, CI.
 
 The frontend covers login, the incident list and detail pages, dispatching,
 the resource list, forms to report an incident and add a resource, and a map

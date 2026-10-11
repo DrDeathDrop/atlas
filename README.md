@@ -124,5 +124,7 @@ Done:
   consumers are idempotent and failed messages go to a dead-letter queue
 - Priority scoring: an explainable 0 to 100 score per open incident, used to
   order the incident list
+- Disaster simulator: reproducible scenarios that feed incidents through the
+  normal pipeline at a chosen pace
 
-Planned, in order: disaster simulator, analytics, observability.
+Planned, in order: analytics, observability.
