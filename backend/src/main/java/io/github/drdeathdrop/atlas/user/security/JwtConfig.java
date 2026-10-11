@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -20,14 +22,20 @@ import java.security.SecureRandom;
 public class JwtConfig {
     private static final Logger log = LoggerFactory.getLogger(JwtConfig.class);
 
+    static final String PRODUCTION_PROFILE = "prod";
+
     private static final int MIN_KEY_BYTES = 32;
 
     @Bean
-    SecretKey jwtSigningKey(JwtProperties properties) {
+    SecretKey jwtSigningKey(JwtProperties properties, Environment environment) {
         String secret = properties.secret();
         byte[] keyBytes;
 
         if (secret == null || secret.isBlank()) {
+            if (environment.acceptsProfiles(Profiles.of(PRODUCTION_PROFILE))) {
+                throw new IllegalStateException(
+                        "ATLAS_JWT_SECRET must be set when the " + PRODUCTION_PROFILE + " profile is active");
+            }
             keyBytes = new byte[MIN_KEY_BYTES];
             new SecureRandom().nextBytes(keyBytes);
             log.warn("ATLAS_JWT_SECRET is not set. Using a random signing key: "

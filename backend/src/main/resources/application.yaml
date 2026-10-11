@@ -7,6 +7,9 @@ spring:
     username: ${ATLAS_DB_APP_USER:atlas_app}
     password: ${ATLAS_DB_APP_PASSWORD:atlas_app}
 
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
   jpa:
     open-in-view: false
     hibernate:
@@ -30,6 +33,7 @@ spring:
 
 server:
   port: 8080
+  shutdown: graceful
   forward-headers-strategy: native
 
 management:

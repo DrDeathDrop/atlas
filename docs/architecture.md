@@ -524,6 +524,49 @@ Prometheus scrapes the backend every 15 seconds and Grafana shows a
 provisioned dashboard; both are defined in `docker-compose.yml` and
 `observability/`, so the setup is versioned with the code.
 
+## Deployment
+
+Both parts are built as multi-stage Docker images: one stage with the full
+toolchain compiles, and the final image holds only the runtime and the result.
+The backend image runs as a non-root user.
+
+**Startup order.** In Docker Compose the backend waits for PostgreSQL and
+RabbitMQ to be healthy, and the frontend waits for the backend. The backend's
+health check is its own readiness probe, so "healthy" means "can serve
+requests", not just "the process exists".
+
+**Shutdown.** The server shuts down gracefully: on a stop signal it refuses new
+requests and gives running ones up to 20 seconds to finish, and Compose waits
+30 seconds before killing the container. A restart or a new deployment
+therefore does not cut requests off halfway.
+
+**Memory.** The JVM is told to use at most 75% of the container's memory and to
+exit on an out-of-memory error. A JVM that survives one is in an unknown state;
+exiting lets the restart policy bring up a clean process.
+
+**Secrets.** Nothing secret is in the image or the repository. Settings come
+from environment variables. Locally a missing signing key is replaced by a
+random one with a warning. With the `prod` profile that fallback is removed and
+the application refuses to start, because a silently generated key would log
+every user out on each restart and differ between instances.
+
+**nginx.** The frontend container serves the built files and forwards `/api`
+and `/ws` to the backend, so the browser sees a single origin and no CORS
+configuration is needed. It also:
+
+- sends a content security policy that allows scripts only from the
+  application itself, plus the two external sources the app uses: Google Fonts
+  and OpenStreetMap tiles. An injected script from anywhere else is not run.
+- forbids showing the app in a frame (clickjacking) and stops browsers from
+  guessing content types.
+- caches files with a content hash in their name for a year, since a changed
+  file gets a new name, and makes the browser revalidate `index.html` every
+  time, so a new release is picked up at once.
+- compresses text responses.
+
+Not done here, because it belongs to the hosting environment: TLS termination
+and the `Strict-Transport-Security` header that goes with it.
+
 ## Testing
 
 Unit tests cover the logic that needs no infrastructure: the priority

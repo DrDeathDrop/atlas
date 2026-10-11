@@ -43,7 +43,11 @@ services:
       ATLAS_DB_PASSWORD: atlas
       ATLAS_DEMO_DATA: "true"
       ATLAS_RABBIT_HOST: rabbitmq
+      ATLAS_JWT_SECRET: ${ATLAS_JWT_SECRET:-local-only-signing-key-replace-outside-development}
+      ATLAS_ADMIN_PASSWORD: ${ATLAS_ADMIN_PASSWORD:-}
       SPRING_PROFILES_ACTIVE: prod
+    stop_grace_period: 30s
+    restart: unless-stopped
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -59,8 +63,10 @@ services:
     container_name: atlas-frontend
     ports:
       - "4200:80"
+    restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   prometheus:
     profiles: ["observability"]

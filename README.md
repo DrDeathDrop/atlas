@@ -62,6 +62,11 @@ docker compose --profile full up -d --build
 This builds and starts the backend and frontend as well. The app is then at
 http://localhost:4200.
 
+The containers run the backend with the `prod` profile. To use your own signing
+key and administrator password, copy `.env.example` to `.env` and edit it
+before starting; Docker Compose reads it automatically. Without it a
+development-only key is used.
+
 ### Metrics and dashboards
 
 ```
@@ -90,7 +95,7 @@ All settings have defaults that work locally. Outside local development, set:
 
 | Variable | Purpose |
 |---|---|
-| `ATLAS_JWT_SECRET` | Signing key for access tokens, at least 32 characters |
+| `ATLAS_JWT_SECRET` | Signing key for access tokens, at least 32 characters. Required with the `prod` profile: the application refuses to start without it |
 | `ATLAS_ADMIN_EMAIL`, `ATLAS_ADMIN_PASSWORD` | The first administrator, created when none exists |
 | `ATLAS_DEMO_DATA` | Set to `true` to add sample teams and vehicles around Plovdiv at startup |
 | `ATLAS_DB_URL` | Database address |
@@ -157,5 +162,7 @@ Done:
   hotspots, computed with SQL aggregates and PostGIS
 - Observability: liveness and readiness probes, Prometheus metrics including
   outbox lag, a request id on every log line, and a Grafana dashboard
+- Deployment: multi-stage images, container health checks, graceful shutdown,
+  a content security policy and long-lived caching of hashed assets in nginx
 
 Planned: login rate limiting and caching.
