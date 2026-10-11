@@ -17,8 +17,6 @@ jobs:
       run:
         working-directory: backend
 
-    services:
-
     steps:
       - uses: actions/checkout@v5
 
