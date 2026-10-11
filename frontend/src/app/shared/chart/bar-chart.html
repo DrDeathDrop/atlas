@@ -1,0 +1,64 @@
+@if (items().length === 0 || total() === 0) {
+  <p class="empty">Nothing to show for this period.</p>
+} @else {
+  @if (layout() === 'bars') {
+    <ul class="bars" [attr.aria-label]="caption()">
+      @for (item of items(); track item.label) {
+        <li class="bar-row" tabindex="0">
+          <span class="bar-label">{{ item.label }}</span>
+          <span class="bar-track">
+            <span class="bar" [style.width.%]="share(item.value)"></span>
+            <span class="bar-value">{{ item.value.toLocaleString() }}</span>
+          </span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="columns-chart">
+      <div class="axis" aria-hidden="true">
+        <span>{{ max().toLocaleString() }}</span>
+        <span>0</span>
+      </div>
+      <div class="plot">
+        <ul class="columns" [attr.aria-label]="caption()">
+          @for (item of items(); track item.label) {
+            <li class="column-slot" tabindex="0" [attr.aria-label]="item.label + ': ' + item.value">
+              <span class="column" [style.height.%]="share(item.value)" [class.zero]="item.value === 0"></span>
+              <span class="tip" role="tooltip">
+                <strong>{{ item.value.toLocaleString() }}</strong>
+                {{ item.label }}
+              </span>
+            </li>
+          }
+        </ul>
+        <div class="range" aria-hidden="true">
+          <span>{{ first() }}</span>
+          <span>{{ last() }}</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <details class="table-view">
+    <summary>Show as table</summary>
+    <table>
+      <caption>
+        {{ caption() }}
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">{{ categoryLabel() }}</th>
+          <th scope="col" class="number">{{ valueLabel() }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.label) {
+          <tr>
+            <th scope="row">{{ item.label }}</th>
+            <td class="number">{{ item.value.toLocaleString() }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </details>
+}

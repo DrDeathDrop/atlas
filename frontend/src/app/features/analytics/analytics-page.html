@@ -1,0 +1,98 @@
+<header class="header">
+  <h1>Analytics</h1>
+  <div class="controls">
+    <mat-button-toggle-group
+      [value]="days()"
+      (change)="choosePeriod($event.value)"
+      aria-label="Period"
+      hideSingleSelectionIndicator
+    >
+      @for (period of periods; track period) {
+        <mat-button-toggle [value]="period">{{ period }} days</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+    <mat-checkbox [checked]="includeSimulated()" (change)="toggleSimulated($event.checked)">
+      Include simulated incidents
+    </mat-checkbox>
+    <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()">Refresh</button>
+  </div>
+</header>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (failed()) {
+  <p class="message error" role="alert">The figures could not be loaded. Check that the server is running and try again.</p>
+}
+
+@if (overview(); as data) {
+  <ul class="tiles">
+    @for (tile of tiles(); track tile.label) {
+      <li class="tile">
+        <span class="tile-label">{{ tile.label }}</span>
+        <span class="tile-value">{{ tile.value }}</span>
+        <span class="tile-note">{{ tile.note }}</span>
+      </li>
+    }
+  </ul>
+
+  <section class="panel wide">
+    <h2>Incidents reported per day</h2>
+    <app-bar-chart
+      layout="columns"
+      caption="Incidents reported per day"
+      categoryLabel="Day"
+      [items]="perDay()"
+    />
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>By category</h2>
+      <app-bar-chart caption="Incidents by category" categoryLabel="Category" [items]="byCategory()" />
+    </section>
+
+    <section class="panel">
+      <h2>By severity</h2>
+      <app-bar-chart caption="Incidents by severity" categoryLabel="Severity" [items]="bySeverity()" />
+    </section>
+
+    <section class="panel">
+      <h2>By current status</h2>
+      <app-bar-chart caption="Incidents by current status" categoryLabel="Status" [items]="byStatus()" />
+    </section>
+
+    <section class="panel">
+      <h2>Resources right now</h2>
+      <app-bar-chart
+        caption="Resources by status"
+        categoryLabel="Status"
+        valueLabel="Resources"
+        [items]="resourcesByStatus()"
+      />
+    </section>
+
+    <section class="panel">
+      <h2>Most dispatched resources</h2>
+      <app-bar-chart
+        caption="Most dispatched resources"
+        categoryLabel="Resource"
+        valueLabel="Assignments"
+        [items]="busiestResources()"
+      />
+    </section>
+
+    <section class="panel">
+      <h2>Where incidents cluster</h2>
+      @if (hotspots().length === 0) {
+        <p class="note">No area had two or more incidents in this period.</p>
+      } @else {
+        <app-map-view class="hotspots" [markers]="hotspots()" [fitToMarkers]="true" />
+        <p class="note">Each marker is an area of about two kilometres with at least two incidents. Hover for the count.</p>
+      }
+    </section>
+  </div>
+
+  <p class="note">Days are counted in UTC. Times are medians, so a few very slow cases do not distort them.</p>
+}

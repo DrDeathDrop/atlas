@@ -251,6 +251,40 @@ the next attempt. Bursts of notices are collapsed into one reload.
 The broker is Spring's in-memory one, which is enough for a single
 application instance. Running several instances would need a shared broker.
 
+## Analytics
+
+The analytics page answers "how are we doing": how many incidents, of what
+kind, how fast they are verified, dispatched to and resolved, which resources
+carry the load, and where incidents cluster.
+
+**Read-only SQL, on purpose.** The `analytics` module does not call other
+modules' services or load their entities. It runs aggregate queries straight
+against the tables with `NamedParameterJdbcTemplate`. Reporting needs
+`GROUP BY`, `FILTER`, percentiles and spatial grouping, which are natural in
+SQL and awkward through an object mapper, and it never changes anything. The
+cost is that these queries know table and column names of other modules, so
+a schema change there can break a report. That coupling is accepted for a
+reporting module and kept in one class.
+
+**Where the numbers come from.** Response times are measured from the audit
+log and the assignments table, not from extra timestamp columns: the time
+from "reported" to the first `VERIFIED` entry, to the first assignment, and to
+the first `RESOLVED` entry. Medians are used instead of averages, because one
+incident left open for a week would distort an average.
+
+**Days without incidents still appear.** The daily series is built with
+`generate_series` and a left join, so a quiet day is a zero, not a gap.
+
+**Hotspots** group incident locations into a grid of about two kilometres
+(`ST_SnapToGrid`) and report the centre of each cell that has at least two.
+
+**Simulated incidents are excluded by default**, using the link table the
+simulator maintains, and can be included with a switch.
+
+Everything is calculated on request. With far more data the same queries
+would move to a read replica or to summary tables refreshed in the
+background.
+
 ## Disaster simulator
 
 An administrator can start a simulated disaster: a scenario (flood,
@@ -404,7 +438,9 @@ frontend/src/app
 ├── features/
 │   ├── auth/         login page
 │   ├── incidents/    list, detail, dispatch panel, report form
+│   ├── analytics/    figures and charts
 │   ├── map/          the map page and its drawing panel
+│   ├── simulator/    the disaster simulator
 │   └── resources/    list, add form
 └── shared/           small reusable pieces, including the map component
 ```
@@ -461,7 +497,8 @@ assignment), priority scoring of incidents, the `facility` module (hospitals and
 module (evacuation and affected zones, road closures), the `audit` module
 (append-only log of incident and resource events), live updates and stored
 notifications in the `notification` module, the `messaging` module (outbox
-and RabbitMQ), the `simulation` module (disaster simulator), Liquibase migrations, Docker setup, CI.
+and RabbitMQ), the `simulation` module (disaster simulator), the `analytics` module
+(reporting), Liquibase migrations, Docker setup, CI.
 
 The frontend covers login, the incident list and detail pages, dispatching,
 the resource list, forms to report an incident and add a resource, and a map
@@ -469,4 +506,4 @@ of incidents, resources, facilities, zones and closed roads, on which zones,
 closures and facilities can be drawn. Lists, the incident page and the map
 reload themselves when something changes.
 
-Not yet implemented: email notifications and `analytics`.
+Not yet implemented: email notifications.

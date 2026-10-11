@@ -21,6 +21,7 @@ export class Shell implements OnInit, OnDestroy {
   protected readonly user = this.auth.user;
   protected readonly isLive = this.live.connected;
   protected readonly isAdmin = computed(() => this.auth.hasRole('ADMIN'));
+  protected readonly seesAnalytics = computed(() => this.auth.hasRole('ADMIN', 'ANALYST', 'DISPATCHER'));
 
   ngOnInit(): void {
     this.live.start();

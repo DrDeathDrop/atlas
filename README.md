@@ -126,5 +126,7 @@ Done:
   order the incident list
 - Disaster simulator: reproducible scenarios that feed incidents through the
   normal pipeline at a chosen pace
+- Analytics: totals, breakdowns, response times, resource load and incident
+  hotspots, computed with SQL aggregates and PostGIS
 
-Planned, in order: analytics, observability.
+Planned: observability.
