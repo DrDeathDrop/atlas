@@ -10,7 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import io.github.drdeathdrop.atlas.support.IntegrationTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@IntegrationTest
 class NearbyResourcesIntegrationTest {
 
     private static final double LATITUDE = 42.1354;

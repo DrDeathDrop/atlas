@@ -18,31 +18,6 @@ jobs:
         working-directory: backend
 
     services:
-      rabbitmq:
-        image: rabbitmq:4
-        env:
-          RABBITMQ_DEFAULT_USER: atlas
-          RABBITMQ_DEFAULT_PASS: atlas
-        ports:
-          - 5672:5672
-        options: >-
-          --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-      postgres:
-        image: postgis/postgis:17-3.5
-        env:
-          POSTGRES_DB: atlas
-          POSTGRES_USER: atlas
-          POSTGRES_PASSWORD: atlas
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd "pg_isready -U atlas -d atlas"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 10
 
     steps:
       - uses: actions/checkout@v5

@@ -1,9 +1,9 @@
 package io.github.drdeathdrop.atlas;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import io.github.drdeathdrop.atlas.support.IntegrationTest;
 
-@SpringBootTest
+@IntegrationTest
 class AtlasApplicationTests {
     @Test
     void contextLoads() {

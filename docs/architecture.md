@@ -474,6 +474,25 @@ with a stub and check only what was sent to it. Drawing a zone is the same
 idea: the page collects clicked points in a signal and hands them back to the
 map to display.
 
+## Testing
+
+Unit tests cover the logic that needs no infrastructure: the priority
+calculator, the scenario generator, the services with their collaborators
+mocked.
+
+Integration tests are marked `@IntegrationTest`. They start the whole
+application against a real PostgreSQL with PostGIS and a real RabbitMQ, both
+run by Testcontainers. The containers start once per test run and are shared by
+every test class, and Spring reuses one application context for all of them, so
+the cost is paid once. Liquibase builds the schema from the same migrations
+production uses, and the application connects as the restricted `atlas_app`
+user, so a test proves the migrations, the grants and the queries together.
+
+Nothing has to be started by hand and nothing is left behind: the containers
+use random free ports and are removed when the run ends. An in-memory database
+is not used, because spatial queries, `SKIP LOCKED`, partial unique indexes and
+the audit-log permissions only behave correctly on PostgreSQL itself.
+
 ## Technology
 
 | Area | Choice |
@@ -486,6 +505,7 @@ map to display.
 | Messaging | RabbitMQ, with a transactional outbox |
 | Live updates | WebSocket with STOMP, Spring's in-memory broker |
 | Frontend | Angular, Angular Material, Leaflet, stompjs |
+| Tests | JUnit, Mockito, Testcontainers; Vitest on the frontend |
 | Local services | Docker Compose |
 
 ## Current state

@@ -81,7 +81,9 @@ written to the log once, on the first start.
 
 ## Tests
 
-- Backend, from `backend/`: `./mvnw verify`. The database must be running.
+- Backend, from `backend/`: `./mvnw verify`. Docker must be running: the
+  integration tests start their own PostgreSQL and RabbitMQ with Testcontainers
+  and remove them afterwards, so they never touch the development database.
 - Frontend, from `frontend/`: `npm test`.
 
 Both run in CI on every push.
