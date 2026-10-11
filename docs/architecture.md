@@ -474,6 +474,56 @@ with a stub and check only what was sent to it. Drawing a zone is the same
 idea: the page collects clicked points in a signal and hands them back to the
 map to display.
 
+## Observability
+
+Three questions have to be answerable without attaching a debugger: is the
+application up, what is it doing, and what happened to one particular request.
+
+**Health.** Spring Boot Actuator serves `/actuator/health`, with separate
+liveness and readiness probes. Liveness says the process is running. Readiness
+also checks the database, because without it no request can succeed. RabbitMQ
+is shown in the full health report but is deliberately not part of readiness:
+when the broker is down the application still works and events wait in the
+outbox, so taking the instance out of service would turn a delay into an
+outage.
+
+**Metrics.** Micrometer collects metrics and exposes them in Prometheus format
+at `/actuator/prometheus`. The framework supplies request counts and timings,
+JVM memory and the connection pool. Atlas adds its own:
+
+| Metric | Meaning |
+|---|---|
+| `atlas.incidents.reported` | Incidents reported |
+| `atlas.incidents.status.changes` | Status changes, tagged with the new status |
+| `atlas.outbox.pending` | Events written but not yet published |
+| `atlas.outbox.oldest.pending.age` | How long the oldest of those has waited |
+| `atlas.outbox.published` | Events published to the broker |
+| `atlas.notifications.events` | Events consumed, tagged `handled`, `duplicate` or `rejected` |
+| `atlas.live.sessions` | Open WebSocket connections |
+
+The two outbox gauges matter most. If the relay stops, nothing throws: users
+simply stop getting notifications. A growing number of waiting events is the
+only signal. The incident counters are incremented after the transaction
+commits, so a rolled-back request is not counted. Each module registers its own metrics;
+there is no central metrics class that would have to know every module.
+
+**Logs.** `RequestIdFilter` gives every request an id, taken from the
+`X-Request-Id` header if the caller or nginx supplied one and generated
+otherwise. The id is put in the logging context, printed on every log line for
+that request and returned in the response header, so a user's report can be
+matched to the exact lines. A supplied id is accepted only if it is short and
+made of safe characters, otherwise a caller could inject fake log lines. With
+the `prod` profile, logs are written as JSON for a log collector.
+
+**Management port.** Health and metrics are served on port 8081, the API on
+8080. Only 8080 is routed through nginx, so in a deployment that does not
+publish 8081 the internal endpoints cannot be reached from outside, with no
+extra access rule to get wrong.
+
+Prometheus scrapes the backend every 15 seconds and Grafana shows a
+provisioned dashboard; both are defined in `docker-compose.yml` and
+`observability/`, so the setup is versioned with the code.
+
 ## Testing
 
 Unit tests cover the logic that needs no infrastructure: the priority
@@ -506,6 +556,7 @@ the audit-log permissions only behave correctly on PostgreSQL itself.
 | Live updates | WebSocket with STOMP, Spring's in-memory broker |
 | Frontend | Angular, Angular Material, Leaflet, stompjs |
 | Tests | JUnit, Mockito, Testcontainers; Vitest on the frontend |
+| Observability | Spring Boot Actuator, Micrometer, Prometheus, Grafana |
 | Local services | Docker Compose |
 
 ## Current state
@@ -518,7 +569,8 @@ module (evacuation and affected zones, road closures), the `audit` module
 (append-only log of incident and resource events), live updates and stored
 notifications in the `notification` module, the `messaging` module (outbox
 and RabbitMQ), the `simulation` module (disaster simulator), the `analytics` module
-(reporting), Liquibase migrations, Docker setup, CI.
+(reporting), health checks, metrics and request ids, Liquibase migrations,
+Docker setup, CI.
 
 The frontend covers login, the incident list and detail pages, dispatching,
 the resource list, forms to report an incident and add a resource, and a map

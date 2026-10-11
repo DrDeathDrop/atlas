@@ -32,6 +32,30 @@ server:
   port: 8080
   forward-headers-strategy: native
 
+management:
+  server:
+    port: ${ATLAS_MANAGEMENT_PORT:8081}
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+
+logging:
+  pattern:
+    correlation: "[%X{requestId:-}] "
+
 atlas:
   security:
     jwt:

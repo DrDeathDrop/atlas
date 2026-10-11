@@ -16,7 +16,8 @@ today.
 | Frontend | Angular 22 |
 | Database | PostgreSQL 17 with PostGIS, Liquibase migrations |
 | Messaging | RabbitMQ, WebSocket (STOMP) |
-| Infrastructure | Docker Compose, GitHub Actions |
+| Observability | Actuator, Micrometer, Prometheus, Grafana |
+| Infrastructure | Docker Compose, Testcontainers, GitHub Actions |
 
 The design is described in [docs/architecture.md](docs/architecture.md).
 
@@ -61,6 +62,28 @@ docker compose --profile full up -d --build
 This builds and starts the backend and frontend as well. The app is then at
 http://localhost:4200.
 
+### Metrics and dashboards
+
+```
+docker compose --profile observability up -d
+```
+
+This adds Prometheus (http://localhost:9090) and Grafana
+(http://localhost:3000). Grafana opens on the Atlas dashboard without a login;
+to edit, sign in as `atlas` / `atlas`.
+
+The backend serves health checks and metrics on its own port, 8081, apart from
+the API on 8080, so a deployment can keep them internal:
+
+- http://localhost:8081/actuator/health
+- http://localhost:8081/actuator/health/liveness
+- http://localhost:8081/actuator/health/readiness
+- http://localhost:8081/actuator/prometheus
+
+Every response carries an `X-Request-Id` header, and the same id is on every
+log line written while that request was handled. With the `prod` profile the
+log is written as JSON.
+
 ## Configuration
 
 All settings have defaults that work locally. Outside local development, set:
@@ -75,6 +98,7 @@ All settings have defaults that work locally. Outside local development, set:
 | `ATLAS_DB_APP_PASSWORD` | Password of `atlas_app`, the restricted user the application runs as |
 | `ATLAS_RABBIT_HOST`, `ATLAS_RABBIT_PORT` | RabbitMQ address |
 | `ATLAS_RABBIT_USER`, `ATLAS_RABBIT_PASSWORD` | RabbitMQ login |
+| `ATLAS_MANAGEMENT_PORT` | Port for health checks and metrics, 8081 by default |
 
 If `ATLAS_ADMIN_PASSWORD` is not set, a random password is generated and
 written to the log once, on the first start.
@@ -94,6 +118,7 @@ Both run in CI on every push.
 backend/              Spring Boot application
 frontend/             Angular application
 docs/                 Architecture and decisions
+observability/        Prometheus and Grafana configuration
 docker-compose.yml    Local services
 ```
 
@@ -130,5 +155,7 @@ Done:
   normal pipeline at a chosen pace
 - Analytics: totals, breakdowns, response times, resource load and incident
   hotspots, computed with SQL aggregates and PostGIS
+- Observability: liveness and readiness probes, Prometheus metrics including
+  outbox lag, a request id on every log line, and a Grafana dashboard
 
-Planned: observability.
+Planned: login rate limiting and caching.

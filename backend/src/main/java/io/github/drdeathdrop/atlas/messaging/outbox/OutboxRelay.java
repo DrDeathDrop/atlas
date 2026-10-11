@@ -1,6 +1,8 @@
 package io.github.drdeathdrop.atlas.messaging.outbox;
 
 import io.github.drdeathdrop.atlas.messaging.EventChannels;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
@@ -22,16 +24,21 @@ import java.util.List;
 public class OutboxRelay {
     static final int BATCH_SIZE = 50;
     static final Duration KEEP_PUBLISHED_FOR = Duration.ofDays(7);
+    static final String PUBLISHED = "atlas.outbox.published";
 
     private static final Logger log = LoggerFactory.getLogger(OutboxRelay.class);
 
     private final OutboxEventRepository repository;
     private final RabbitTemplate rabbitTemplate;
+    private final Counter published;
     private boolean brokerWasDown;
 
-    public OutboxRelay(OutboxEventRepository repository, RabbitTemplate rabbitTemplate) {
+    public OutboxRelay(OutboxEventRepository repository, RabbitTemplate rabbitTemplate, MeterRegistry registry) {
         this.repository = repository;
         this.rabbitTemplate = rabbitTemplate;
+        this.published = Counter.builder(PUBLISHED)
+                .description("Events published from the outbox to the broker")
+                .register(registry);
     }
 
     @Scheduled(fixedDelayString = "${atlas.events.relay-delay:1s}")
@@ -51,6 +58,7 @@ public class OutboxRelay {
                 return;
             }
             event.markPublished(Instant.now());
+            published.increment();
         }
 
         if (brokerWasDown && !pending.isEmpty()) {

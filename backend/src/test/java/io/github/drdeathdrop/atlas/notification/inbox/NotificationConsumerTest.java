@@ -1,6 +1,8 @@
 package io.github.drdeathdrop.atlas.notification.inbox;
 
 import io.github.drdeathdrop.atlas.messaging.IntegrationEvent;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +18,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,6 +37,7 @@ class NotificationConsumerTest {
     private static final UUID ACTOR = UUID.randomUUID();
 
     private final ObjectMapper objectMapper = JsonMapper.builder().build();
+    private final MeterRegistry registry = new SimpleMeterRegistry();
 
     @Mock
     private NotificationService notifications;
@@ -42,7 +46,7 @@ class NotificationConsumerTest {
 
     @BeforeEach
     void setUp() {
-        consumer = new NotificationConsumer(notifications, objectMapper);
+        consumer = new NotificationConsumer(notifications, objectMapper, registry);
     }
 
     @Test
@@ -52,6 +56,7 @@ class NotificationConsumerTest {
 
         verify(notifications).notifyRoles(EVENT, NotificationConsumer.COORDINATORS, ACTOR,
                 NotificationType.INCIDENT_REPORTED, "INC-2026-0001 was reported", INCIDENT);
+        assertThat(counted("handled")).isEqualTo(1.0);
     }
 
     @Test
@@ -96,6 +101,7 @@ class NotificationConsumerTest {
         assertThatThrownBy(() -> consumer.receive(unreadable))
                 .isInstanceOf(AmqpRejectAndDontRequeueException.class);
         verifyNoInteractions(notifications);
+        assertThat(counted("rejected")).isEqualTo(1.0);
     }
 
     @Test
@@ -125,6 +131,13 @@ class NotificationConsumerTest {
         assertThatCode(() -> consumer.receive(message(new IntegrationEvent(EVENT,
                 IntegrationEvent.INCIDENT_REPORTED, INCIDENT, "INC-2026-0001", null, null, null, ACTOR))))
                 .doesNotThrowAnyException();
+        assertThat(counted("duplicate")).isEqualTo(1.0);
+        assertThat(counted("handled")).isZero();
+    }
+
+    private double counted(String outcome) {
+        return registry.get(NotificationConsumer.EVENTS).tag(NotificationConsumer.OUTCOME, outcome)
+                .counter().count();
     }
 
     private Message message(IntegrationEvent event) {

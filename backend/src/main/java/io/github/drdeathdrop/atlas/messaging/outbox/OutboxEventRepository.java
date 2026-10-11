@@ -20,6 +20,11 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> 
             """, nativeQuery = true)
     List<OutboxEvent> lockNextUnpublished(@Param("batchSize") int batchSize);
 
+    long countByPublishedAtIsNull();
+
+    @Query("select min(e.createdAt) from OutboxEvent e where e.publishedAt is null")
+    Instant findOldestUnpublishedCreatedAt();
+
     @Modifying
     @Query("delete from OutboxEvent e where e.publishedAt is not null and e.publishedAt < :before")
     int deletePublishedBefore(@Param("before") Instant before);

@@ -1,10 +1,12 @@
 package io.github.drdeathdrop.atlas.messaging.outbox;
 
 import io.github.drdeathdrop.atlas.messaging.EventChannels;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.AmqpConnectException;
@@ -37,8 +39,14 @@ class OutboxRelayTest {
     @Mock
     private RabbitTemplate rabbitTemplate;
 
-    @InjectMocks
+    private final MeterRegistry registry = new SimpleMeterRegistry();
+
     private OutboxRelay relay;
+
+    @BeforeEach
+    void setUp() {
+        relay = new OutboxRelay(repository, rabbitTemplate, registry);
+    }
 
     @Test
     void pendingEventsArePublishedWithTheirIdAndMarked() {
@@ -55,6 +63,7 @@ class OutboxRelayTest {
         assertThat(message.getMessageProperties().getContentType()).isEqualTo("application/json");
         assertThat(message.getMessageProperties().getDeliveryMode()).isEqualTo(MessageDeliveryMode.PERSISTENT);
         assertThat(event.getPublishedAt()).isNotNull();
+        assertThat(registry.get(OutboxRelay.PUBLISHED).counter().count()).isEqualTo(1.0);
     }
 
     @Test

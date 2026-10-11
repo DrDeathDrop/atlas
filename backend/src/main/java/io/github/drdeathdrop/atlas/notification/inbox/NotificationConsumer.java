@@ -3,6 +3,8 @@ package io.github.drdeathdrop.atlas.notification.inbox;
 import io.github.drdeathdrop.atlas.messaging.EventChannels;
 import io.github.drdeathdrop.atlas.messaging.IntegrationEvent;
 import io.github.drdeathdrop.atlas.user.Role;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -19,28 +21,53 @@ import java.util.Set;
 public class NotificationConsumer {
     static final Set<Role> COORDINATORS = Set.of(Role.ADMIN, Role.DISPATCHER);
     static final Set<Role> FIELD = Set.of(Role.FIELD_OPERATOR);
+    static final String EVENTS = "atlas.notifications.events";
+    static final String OUTCOME = "outcome";
 
     private static final Logger log = LoggerFactory.getLogger(NotificationConsumer.class);
 
     private final NotificationService notifications;
     private final ObjectMapper objectMapper;
+    private final Counter handled;
+    private final Counter duplicates;
+    private final Counter rejected;
 
-    public NotificationConsumer(NotificationService notifications, ObjectMapper objectMapper) {
+    public NotificationConsumer(NotificationService notifications, ObjectMapper objectMapper,
+                                MeterRegistry registry) {
         this.notifications = notifications;
         this.objectMapper = objectMapper;
+        this.handled = outcome(registry, "handled");
+        this.duplicates = outcome(registry, "duplicate");
+        this.rejected = outcome(registry, "rejected");
     }
 
     @RabbitListener(queues = EventChannels.NOTIFICATIONS_QUEUE)
     public void receive(Message message) {
-        IntegrationEvent event = read(message);
+        IntegrationEvent event;
+        try {
+            event = read(message);
+        } catch (AmqpRejectAndDontRequeueException exception) {
+            rejected.increment();
+            throw exception;
+        }
 
         try {
             handle(event);
+            handled.increment();
         } catch (DataIntegrityViolationException exception) {
+            duplicates.increment();
             log.info("Skipped event {}: it was already handled or its incident no longer exists", event.eventId());
         } catch (RuntimeException exception) {
+            rejected.increment();
             throw new AmqpRejectAndDontRequeueException("Could not handle event " + event.eventId(), exception);
         }
+    }
+
+    private static Counter outcome(MeterRegistry registry, String outcome) {
+        return Counter.builder(EVENTS)
+                .description("Events received from the broker, by what happened to them")
+                .tag(OUTCOME, outcome)
+                .register(registry);
     }
 
     void handle(IntegrationEvent event) {
